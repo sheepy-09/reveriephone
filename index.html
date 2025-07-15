@@ -3624,7 +3624,7 @@ flex-shrink: 0;
 <!-- ▼▼▼发起投票按钮▼▼▼ -->
 <button id="send-poll-btn" class="chat-action-icon-btn action-button" title="发起投票"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h10"/><path d="M6 6h.01"/><path d="M8 12h10"/><path d="M6 12h.01"/><path d="M8 18h10"/><path d="M6 18h.01"/></svg></button>
 <!-- ▼▼▼ 【全新】公告板按钮 ▼▼▼ -->
-<button id="open-bulletin-board-btn" class="chat-action-icon-btn action-button" title="公告板">📢</button>
+<button id="open-bulletin-board-btn" class="chat-action-icon-btn action-button" title="公告板">📢︎</button>
 
 <!-- ▲▲▲ 替换结束 ▲▲▲ -->
         </div>
@@ -5247,39 +5247,38 @@ async function loadAllDataFromDB() {
  * @param {string|null} forceState - (可选) 强制指定状态，如 'typing'
  */
 function updateChatHeaderStatus(chat, forceState = null) {
-    if (!chat || chat.isGroup) return;
+    if (!chat || chat.isGroup) return; // 如果没有chat对象或为群聊，则直接退出
     const statusContainer = document.getElementById('chat-header-status');
     const statusTextEl = statusContainer.querySelector('.status-text');
     
-    // --- 强制状态（最高优先级）---
+    // 移除可能存在的动画和特殊状态类
+    statusContainer.classList.remove('typing', 'busy');
+    // 1. 最高优先级：强制状态 "正在输入"
     if (forceState === 'typing') {
         statusTextEl.textContent = '正在输入...';
-        statusContainer.classList.add('typing');
-        statusContainer.classList.remove('busy');
+        statusContainer.classList.add('typing'); // 添加闪烁动画
         return;
     }
     
-    // 移除输入动画
-    statusContainer.classList.remove('typing');
-    
-    // --- 专注模式判断 ---
     const now = Date.now();
+    // 2. 第二优先级：自定义专注模式
     if (chat.statusState.focusModeEndTime && now < chat.statusState.focusModeEndTime) {
         statusTextEl.textContent = chat.statusState.focusModeText;
-        statusContainer.classList.remove('busy'); // 专注模式是在线的，所以是绿灯
+        // 专注模式为绿灯，所以不需要添加 'busy' 类
         return;
     }
-    // --- 离线判断 (1.5小时 = 5400000毫秒) ---
+    // 3. 第三优先级：离线判断 (1.5小时 = 5400000毫秒)
+    // 仅在AI不处于专注模式时检查
     const timeSinceLastAi = now - (chat.statusState.lastAiActivityTime || 0);
     if (timeSinceLastAi > 5400000) {
         statusTextEl.textContent = '离线';
         statusContainer.classList.add('busy'); // busy 类控制灰灯
         return;
     }
-    // --- 默认在线状态 ---
+    // 4. 默认状态：在线
     statusTextEl.textContent = '在线';
-    statusContainer.classList.remove('busy');
 }
+
 /**
  * 离线计时器管理器：为指定聊天设置或重置1.5小时的离线检测
  * @param {object} chat - 当前的聊天对象
