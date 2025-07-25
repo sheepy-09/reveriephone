@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>EPhone</title>
+    <title> EPhone</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <style>
                 :root { --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
@@ -5224,8 +5224,7 @@ function manageInactivityTimer(chat) {
  */
 function isApiUrlBanned(url) {
     // 将黑名单直接定义在函数内部
-	//如果因为api问题能查到这里证明你是聪明宝宝… 但是不好意思由于个人原因确实是对这两家或其管理没什么好感，如果确实要用的话直接删掉就好，我也拿你没办法。算是我一点小恶毒吧，抱歉。
-    const BANNED_API_KEYWORDS = ['nyabit', 'v1', 'dianhuomao'];
+    const BANNED_API_KEYWORDS = ['nyabit', 'v1'];
     if (!url) return false;
     const lowercasedUrl = url.toLowerCase();
     // 使用 .some() 方法，只要找到一个匹配的关键词就立即返回 true
@@ -11887,12 +11886,42 @@ document.getElementById('open-bulletin-board-btn').style.display = chat.isGroup 
 // --- 云端备份与恢复 (V2 - 版本选择) ---
 // ==========================================================
 
+//【请在这里，即注释行的正下方，插入以下一整块新函数代码】
+/**
+ * 【全新】检查云服务是否可用的“哨兵”函数
+ * @returns {boolean} - 如果可用则返回 true, 否则返回 false
+ */
+function isCloudServiceAvailable() {
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    // 1. 如果是本地文件，则云服务不可用
+    if (protocol === 'file:') {
+        return false;
+    }
+    // 2. 如果是部署在 GitHub Pages 上，云服务也不可用
+    if (hostname.endsWith('github.io')) {
+        return false;
+    }
+    // 3. 其他所有情况（例如部署在您自己的带后端服务器的域名上）都视为可用
+    return true;
+}
+
 /**
  * 【V2版】备份数据到服务器，并标记备份类型
  * @param {('manual'|'auto')} backupType - 备份的类型
  * @param {boolean} showAlert - 是否显示成功/失败弹窗
  */
 async function backupDataToServer(backupType = 'auto', showAlert = false) {
+
+    if (!isCloudServiceAvailable()) {
+        // 如果服务不可用，并且是需要弹窗提示的手动操作，就给出提示
+        if (showAlert) {
+            showCustomAlert('☁️ 云服务不可用', '此功能在当前环境（如本地文件或GitHub Pages）下无法使用。');
+        }
+        // 无论如何都直接退出，不执行后续备份逻辑
+        return;
+    }
+   
     console.log(`[云同步V2] 开始备份，类型: ${backupType}`);
     try {
         const tablesToBackup = [
@@ -12006,6 +12035,10 @@ async function restoreDataFromServer(backupType) {
  * 【全新】打开并渲染备份版本选择模态框
  */
 async function openRestoreVersionSelector() {
+if (!isCloudServiceAvailable()) {
+        showCustomAlert('☁️ 云服务不可用', '此功能在当前环境（如本地文件或GitHub Pages）下无法使用。');
+        return; // 退出函数
+    }
     const modal = document.getElementById('restore-version-modal');
     const listEl = document.getElementById('restore-version-list');
     
@@ -12075,6 +12108,10 @@ let backupTimer = null;
 function markForBackup() {
     if (backupTimer) clearTimeout(backupTimer);
     backupTimer = setTimeout(() => {
+
+        //【请在这里，即 setTimeout 回调函数的内部，插入下面这行代码】
+        if (!isCloudServiceAvailable()) return; // 如果云服务不可用，则静默退出，不执行自动备份
+      
         // 自动备份总是调用 'auto' 类型
         backupDataToServer('auto', false)
             .catch(e => console.warn('[云同步V2] 自动备份失败:', e));
