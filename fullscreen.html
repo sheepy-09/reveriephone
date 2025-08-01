@@ -6,7 +6,8 @@
     <title> EPhone</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
     <style>
-                :root { --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
+
+      :root { --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
         html { height: 100%; overflow: hidden; }
 		body { height: 100%; overflow: hidden; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: normal; background-color: var(--secondary-bg); display: block; box-sizing: border-box; }
                 #phone-frame { width: 100%; height: 100%; padding: 0; background-color: transparent; border-radius: 0; box-shadow: none; position: relative; }       
@@ -15,6 +16,7 @@
         #status-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: white; z-index: 10; font-size: 14px; box-sizing: border-box; pointer-events: none; }
         #status-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: white; z-index: 10; font-size: 14px; box-sizing: border-box; pointer-events: none; }
         #status-bar-time { font-weight: 600; }
+
         .battery-container { display: flex; align-items: center; gap: 5px; }
         .battery-icon { width: 25px; height: 12px; border: 1px solid white; border-radius: 3px; position: relative; padding: 1px; }
         .battery-icon::after { content: ''; position: absolute; right: -3px; top: 2px; width: 2px; height: 6px; background-color: white; border-radius: 0 1px 1px 0; }
@@ -32,7 +34,6 @@
     font-size: 16px; /* 专门为“上传”、“+”等文字按钮缩小字号 */
     font-weight: 600; /* 可以加粗一点让它更清晰 */
 }
-
         .header .action-btn img { height: 26px; }
         .header .save-btn { font-size: 16px; color: var(--accent-color); font-weight: 600; cursor: pointer; }
         #home-screen { display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 20px; padding-top: 80px; padding-bottom: 50px; box-sizing: border-box; background-size: cover; background-position: center; }
@@ -101,7 +102,7 @@
     flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    align-items: flex-end; /* 内部元素靠右对齐 */
+    align-items: flex-end; /*  内部元素靠右对齐 */
 }
 
 .chat-list-item .timestamp {
@@ -5234,47 +5235,56 @@ function isApiUrlBanned(url) {
 
         function updateClock() { const now = new Date(); const timeString = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }); const dateString = now.toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' }); document.getElementById('main-time').textContent = timeString; document.getElementById('status-bar-time').textContent = timeString; document.getElementById('main-date').textContent = dateString; }
 
+       // 【请将下面这段【究极V4版】新代码完整粘贴在这里】
+        /**
+         * 【究极V4版】智能解析AI回复，采用“分而治之”策略，健壮性最高
+         * @param {string} content - AI的原始回复字符串
+         * @returns {Array} - 一个包含所有被成功解析的消息对象的标准数组
+         */
         function parseAiResponse(content) {
-            const trimmedContent = content.trim();
-
-            // 1. 尝试作为完整的JSON数组解析 (最理想情况)
-            if (trimmedContent.startsWith('[') && trimmedContent.endsWith(']')) {
-                try {
-                    const parsed = JSON.parse(trimmedContent);
-                    if (Array.isArray(parsed)) return parsed;
-                } catch (e) {
-                    // 解析失败，继续尝试其他方法
-                }
-            }
-
-            // 2. 如果失败，尝试作为单个JSON对象解析 (处理AI“偷懒”的情况)
-            if (trimmedContent.startsWith('{') && trimmedContent.endsWith('}')) {
-                try {
-                    const parsed = JSON.parse(trimmedContent);
-                    // 如果成功解析为对象，把它放进一个数组里再返回，以统一格式
-                    return [parsed]; 
-                } catch (e) {
-                    // 解析失败，继续尝试其他方法
-                }
-            }
+            console.log("V4解析器成功接收到原始数据");
+            let finalMessages = [];
+            // 1. 【拆分】使用正则表达式，将所有独立的 [...] 块提取出来
+            const jsonBlocks = [...content.matchAll(/\[(.*?)\]/gs)];
             
-            // 3. 作为最后的备用方案，尝试从文本中提取JSON数组
-            try {
-                const match = content.match(/\[(.*?)\]/s);
-                if (match && match[0]) {
-                    const parsed = JSON.parse(match[0]);
-                    if (Array.isArray(parsed)) return parsed;
+            if (jsonBlocks.length > 0) {
+                // 2. 【逐个处理】遍历每一个提取出的JSON块
+                for (const blockMatch of jsonBlocks) {
+                    let blockString = blockMatch[0]; // 获取完整的 "[...]" 字符串
+                    try {
+                        // 3. 【净化与解析】直接尝试解析，让JSON.parse处理转义
+                        // 现代JS引擎的JSON.parse已经足够强大，通常不需要手动修复引号
+                        let parsedBlock = JSON.parse(blockString);
+                        // 确保解析出来的是数组，并且不是空数组
+                        if (Array.isArray(parsedBlock) && parsedBlock.length > 0) {
+                            // 4. 【合并】将解析成功的消息对象添加到最终结果中
+                            finalMessages.push(...parsedBlock);
+                        }
+                    } catch (e) {
+                         // 【容错】如果解析失败，可能是因为结尾逗号等问题
+                        console.warn("单个JSON块解析失败，尝试修复并重试:", blockString, "错误:", e);
+                        // 尝试移除结尾可能存在的逗号
+                        let cleanedBlockString = blockString.trim().replace(/,\s*\]$/, ']');
+                        try {
+                            let parsedBlock = JSON.parse(cleanedBlockString);
+                            if (Array.isArray(parsedBlock) && parsedBlock.length > 0) {
+                                console.log("修复结尾逗号后成功解析。");
+                                finalMessages.push(...parsedBlock);
+                            }
+                        } catch (e2) {
+                            // 如果修复后仍然失败，则记录错误并跳过这个坏掉的块
+                            console.error("修复后解析仍然失败，跳过此块:", blockString, "最终错误:", e2);
+                        }
+                    }
                 }
-            } catch (e) {
-                // 提取失败
             }
-
-            // 4. 如果以上全部失败，则视为纯文本处理
-            const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('```'));
-            if (lines.length > 0) return lines;
-            
-            // 5. 最终的最终，返回原始文本
-            return [content];
+            // 5. 【最终保障】如果经过以上所有努力，仍然没有解析出任何消息，则将全部内容作为单条文本消息返回
+            if (finalMessages.length === 0) {
+                console.error("【V4解析器】所有策略均失败，将返回纯文本。");
+                return [{ type: 'text', content: content }];
+            }
+            console.log("V4解析器成功解析出消息数量:", finalMessages.length);
+            return finalMessages;
         }
 
         function renderApiSettings() { document.getElementById('proxy-url').value = state.apiConfig.proxyUrl || ''; document.getElementById('api-key').value = state.apiConfig.apiKey || ''; 
@@ -12136,7 +12146,7 @@ document.getElementById('cancel-restore-version-btn').addEventListener('click', 
 });
 
 // ===================================================================
-//  5. 启动！
+// 5. 启动！
 // ===================================================================
 showScreen('home-screen');
         init();
