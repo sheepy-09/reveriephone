@@ -24,8 +24,30 @@
         @keyframes charge-breath { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         .screen { width: 100%; height: 100%; position: absolute; top: 0; left: 0; display: flex; flex-direction: column; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
         .screen.active { opacity: 1; visibility: visible; z-index: 1; }
-        .header { position: relative; z-index: 15; flex-shrink: 0; padding: 15px 20px; padding-top: 45px; background-color: rgba(247, 247, 247, 0.8); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; font-size: 18px; font-weight: 600; }
-        .header .header-actions { display: flex; align-items: center; gap: 15px; }
+ .header {
+            position: relative;
+            z-index: 15;
+            flex-shrink: 0;
+            padding: 15px 20px;
+            padding-top: 45px;
+            /* ▼▼▼ 核心修改：统一使用毛玻璃效果，并修复黑边问题 ▼▼▼ */
+            background-color: rgba(247, 247, 247, 0.8); /* 80%不透明度的背景 */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            /* ▲▲▲ 修改结束 ▲▲▲ */
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+            font-weight: 600;
+        }
+.header .header-actions { 
+            display: flex; 
+            align-items: center; 
+            gap: 15px;
+            flex-shrink: 0; /* <-- 【新增】防止按钮容器被压缩 */
+        }
         .header .back-btn, .header .action-btn { font-size: 24px; cursor: pointer; width: 30px; text-align: center; color: var(--accent-color); display: flex; align-items: center; justify-content: center; }
 
 .header .action-btn {
@@ -45,7 +67,7 @@
         .app-icon:active .icon-bg { transform: scale(0.9); }
         .app-icon .icon-bg img { width: 100%; height: 100%; object-fit: cover; }
         .app-icon .label { color: white; }
-        .form-container, .list-container { padding: 20px; overflow-y: auto; flex-grow: 1; display:flex; flex-direction: column; }
+        .form-container,.list-container { padding: 20px; overflow-y: auto; flex-grow: 1; display:flex; flex-direction: column; }
         .form-group { margin-bottom: 20px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-secondary); }
         .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 16px; box-sizing: border-box; }
@@ -54,7 +76,22 @@
         .form-button { width: 100%; padding: 15px; background-color: var(--accent-color); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
         .form-button-secondary { background-color: #f0f0f0; color: var(--text-primary); border: 1px solid var(--border-color); }
         #wallpaper-screen .form-container { align-items: center; }
-        #wallpaper-preview { width: 180px; height: 320px; border: 2px dashed var(--border-color); background-color: #f0f2f5; margin-bottom: 20px; background-size: cover; background-position: center; border-radius: 10px; display: flex; justify-content: center; align-items: center; color: var(--text-secondary); }
+                #wallpaper-preview { 
+            width: 180px; 
+            height: 320px; 
+            border: 2px dashed var(--border-color); 
+            background-color: #f0f2f5; 
+            margin-bottom: 20px; 
+            background-size: cover; 
+            background-position: center; 
+            border-radius: 10px; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            color: var(--text-secondary);
+            flex-shrink: 0; /* 【核心新增】禁止此元素在Flex布局中被压缩 */
+        }
+
         #wallpaper-upload-input { display: none; }
 /* 修改后的 #world-book-list 样式 */
 #world-book-list {
@@ -725,6 +762,46 @@
 }
 
 /* ▲▲▲ 新样式替换结束 ▲▲▲ */
+
+/* ▼▼▼ 【全新】世界书标签管理项样式 ▼▼▼ */
+#wb-tag-management-modal .modal-content {
+    width: 300px;         /* <-- 核心：设定一个固定的像素宽度 */
+    height: auto;         /* <-- 高度由内容自动撑开，而不是固定比例 */
+    max-height: 60%;      /* <-- 限制最大高度，防止标签过多时撑满屏幕 */
+    box-sizing: border-box; /* <-- 继承之前的修复，确保padding被正确计算 */
+}
+/* ▼▼▼ 【小改动】让“添加”按钮宽度自适应 ▼▼▼ */
+#add-new-wb-tag-btn {
+    width: auto; /* 核心：让宽度由内容和内边距决定，不再是100% */
+    flex-shrink: 0; /* 防止按钮在flex布局中被意外压缩 */
+    padding: 0 18px; /* 调整一下左右内边距，让它更好看 */
+}
+/* ▲▲▲ 新CSS粘贴结束 ▲▲▲ */
+
+.existing-tag-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.existing-tag-item .tag-name {
+    font-weight: 500;
+}
+
+.existing-tag-item .delete-tag-btn {
+    color: #ff3b30;
+    font-size: 22px;
+    font-weight: bold;
+    cursor: pointer;
+    padding: 0 5px;
+    line-height: 1;
+}
+/* ▲▲▲ 新CSS粘贴结束 ▲▲▲ */
+
 
 /* ▼▼▼ 把所有这些新样式粘贴到 <style> 的末尾 ▼▼▼ */
 
@@ -2353,12 +2430,12 @@
 
 /* 确保这些页面的内容区能正确滚动 */
 #api-settings-screen .form-container,
-#font-settings-screen .form-container,
-#wallpaper-screen .form-container {
+#font-settings-screen .form-container {
     padding-top: 100px;
     margin-top: -80px;
     background-color: var(--secondary-bg);
 }
+
 
 /* 壁纸设置页面的预览区比较特殊，需要额外调整 */
 #wallpaper-screen .form-container {
@@ -3298,6 +3375,194 @@ flex-shrink: 0;
 /* ▲▲▲ 修复结束 ▲▲▲ */
 /* ▲▲▲ 公告板功能样式结束 ▲▲▲ */
 
+/* ▼▼▼ 【最终版】世界书界面样式 (重叠布局 + 精致图标) ▼▼▼ */
+/* 1. 世界书屏幕：【核心修复】让它成为一个flex容器，并正确撑满空间 */
+#world-book-screen {
+    background-color: #ffffff;
+    display: flex; /* <-- 【新增】让它成为flex容器 */
+    flex-direction: column; /* <-- 【新增】内部元素垂直排列 */
+}
+/* 2. 固定的顶部区域（Header + 标签栏） */
+#world-book-top-area {
+    position: absolute; /* 关键：脱离文档流，浮在最上层 */
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 20; /* 确保它在列表之上 */
+    background-color: rgba(247, 247, 247, 0.85); /* 关键：统一的毛玻璃背景 */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-color);
+}
+/* Header本身不再需要独立的背景和边框 */
+#world-book-screen .header {
+    background: none;
+    border: none;
+}
+/* 3. 【全新】美化头部右侧的操作按钮 */
+#world-book-screen .header .action-btn {
+ font-weight: normal;
+    color: var(--accent-color);
+    background-color: #e7f3ff; /* 淡蓝色背景 */
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    height: 30px; /* 固定高度 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+/* “+”号按钮的特殊样式，使其变成一个精致的方形图标按钮 */
+#world-book-screen .header .action-btn.add-btn {
+    width: 30px;         /* 固定宽度，使其变为正方形 */
+    height: 30px;        /* 固定高度，与“管理”按钮视觉上一致 */
+    padding: 0;          /* 移除内边距，以便完美居中 */
+    font-size: 22px;     /* 调整“+”号的大小，使其在30x30的框内显得协调 */
+    font-weight: 400;    /* 调整字重，让“+”号更清晰 */
+    line-height: 1;      /* 确保文字垂直居中 */
+    display: flex;       /* 启用flex布局来居中内容 */
+    justify-content: center; /* 水平居中 */
+    align-items: center;     /* 垂直居中 */
+}
+
+/* 3. 【全新】美化头部右侧的操作按钮 */
+#world-book-top-area .header-actions .action-btn {
+    font-weight: normal;
+    color: var(--accent-color);
+    background-color: #e7f3ff; /* 淡蓝色背景 */
+    padding: 5px 12px;
+    border-radius: 8px;
+    font-size: 16px;
+    height: 30px; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    width: auto; /* 确保宽度由内容决定 */
+}
+#world-book-top-area .header-actions .action-btn.add-btn {
+    width: 30px; /* 专门为“+”号按钮设置固定宽度，使其为正方形 */
+    padding: 0;
+    font-size: 22px;
+    font-weight: 400;
+}
+
+
+/* 4. 标签筛选栏样式微调 */
+#world-book-tag-filter-bar {
+    padding: 10px 15px 15px; /* 调整内边距，使其与Header衔接更自然 */
+    background-color: transparent; /* 它现在是透明的，由父级 top-area 提供背景 */
+    border: none; /* 边框也由父级提供 */
+    /* 其他滚动样式保持不变 */
+    display: flex; gap: 10px; overflow-x: auto;
+    -ms-overflow-style: none; scrollbar-width: none;
+}
+#world-book-tag-filter-bar::-webkit-scrollbar { display: none; }
+/* 5. 标签筛选按钮样式 (保持不变) */
+.wb-tag-filter {
+    flex-shrink: 0; padding: 6px 14px; border: 1px solid #dcdcdc; border-radius: 16px;
+    background-color: #ffffff; color: var(--text-primary); font-size: 14px;
+    font-weight: 500; cursor: pointer; transition: all 0.2s ease-in-out;
+}
+.wb-tag-filter:hover { background-color: #f1f1f1; }
+.wb-tag-filter.active { background-color: var(--accent-color); color: white; border-color: var(--accent-color); }
+/* 6. 【关键】世界书列表容器，实现重叠滚动的核心 */
+#world-book-list-container {
+    flex-grow: 1; /* 占据空间（虽然现在看不见） */
+    overflow-y: auto; /* 允许滚动 */
+    /* 关键：用内边距为顶部的固定区域“占位”，135px是 Header(80) + TagBar(55)的大致高度 */
+    padding-top: 135px; 
+}
+/* 7. 列表项内嵌标签样式 (保持不变) */
+.list-item .item-tags-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.list-item .item-tag {
+    padding: 3px 8px; font-size: 11px; background-color: #e9ecef;
+    color: #495057; border-radius: 4px; font-weight: 500;
+}
+/* ▲▲▲ 最终版样式结束 ▲▲▲ */
+
+/* ▼▼▼ 【全新】抽屉面板 (Drawer) 样式 ▼▼▼ */
+.drawer-overlay {
+    position: fixed; /* 使用 fixed 以覆盖整个屏幕 */
+    top: 0;
+    left: 0;
+    width: 100vw; /* 确保覆盖整个视口宽度 */
+    height: 100vh; /* 确保覆盖整个视口高度 */
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 200; /* 需要比聊天设置模态框(100)高 */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
+}
+
+.drawer-overlay.visible {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0s;
+}
+
+.drawer {
+    position: fixed; /* 使用 fixed 以相对于视口定位 */
+    bottom: 0;
+    left: 50%; /* 先移到中心 */
+    transform: translateX(-50%) translateY(100%); /* 水平居中并移出屏幕底部 */
+    width: 100%;
+    max-width: 375px; /* 与手机模拟器宽度保持一致 */
+    height: 60%; /* 抽屉的高度 */
+    background-color: rgba(247, 247, 247, 0.85); /* 毛玻璃效果背景 */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border-color);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    z-index: 201; /* 比遮罩层更高 */
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-sizing: border-box;
+}
+
+.drawer.visible {
+    transform: translateX(-50%) translateY(0); /* 滑入屏幕 */
+}
+
+.drawer-header {
+    flex-shrink: 0;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.drawer-header .drawer-title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.drawer-header .drawer-close-btn {
+    font-size: 16px;
+    color: var(--accent-color);
+    cursor: pointer;
+}
+
+.drawer-body {
+    flex-grow: 1;
+    padding: 15px 20px;
+    overflow-y: auto;
+}
+
+.drawer-footer {
+    flex-shrink: 0;
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    gap: 10px;
+}
+/* ▲▲▲ 新CSS粘贴结束 ▲▲▲ */
+
+
     </style>
 </head>
 <body>
@@ -3336,7 +3601,34 @@ flex-shrink: 0;
 
 
           
-            <div id="world-book-screen" class="screen"><div class="header"><span class="back-btn" onclick="showScreen('home-screen')">‹</span><span>世界书</span><span class="action-btn" id="add-world-book-btn">+</span></div><div id="world-book-list"></div></div>
+  <!-- ▼▼▼ 【最终版】世界书界面结构 (重叠布局) ▼▼▼ -->
+            <div id="world-book-screen" class="screen">
+                <!-- 1. 【核心】固定的顶部区域（这是一个新的容器） -->
+                <div id="world-book-top-area">
+                    <!-- 1a. 头部（现在被包裹在top-area内部） -->
+                    <div class="header">
+                        <span class="back-btn" onclick="showScreen('home-screen')">‹</span>
+                        <span>世界书</span>
+                        <div class="header-actions">
+                            <!-- 应用了新样式的精致按钮 -->
+                            <span class="action-btn" id="manage-wb-tags-btn">管理</span>
+                            <span class="action-btn add-btn" id="add-world-book-btn">+</span>
+                        </div>
+                    </div>
+                    <!-- 1b. 标签筛选栏（现在也被包裹在top-area内部） -->
+                    <div id="world-book-tag-filter-bar">
+                        <!-- 标签按钮将由JS动态生成在这里 -->
+                    </div>
+                </div>
+        
+                <!-- 2. 【核心】可滚动的内容区 -->
+                <div id="world-book-list-container">
+                    <!-- 世界书列表项将由JS动态生成在这里 -->
+                </div>
+            </div>
+            <!-- ▲▲▲ 最终版结构结束 ▲▲▲ -->
+
+
             <div id="world-book-editor-screen" class="screen">
                 <div class="header">
                     <span class="back-btn" onclick="showScreen('world-book-screen')">‹</span>
@@ -3344,14 +3636,31 @@ flex-shrink: 0;
                     <span class="save-btn" id="save-world-book-btn">保存</span>
                 </div>
                 <div class="form-container">
+//【你需要插入的地方】
                     <div class="form-group">
                         <label for="world-book-name-input">书名</label>
                         <input type="text" id="world-book-name-input" placeholder="请输入世界书的名称...">
                     </div>
+                    
+                    <!-- ▼▼▼ 【全新】世界书标签选择器 (已放到正确位置) ▼▼▼ -->
+                    <div class="form-group">
+                        <label>标签 (可点击选择或输入新标签)</label>
+                        <div class="custom-multiselect">
+                            <div class="select-box">
+                                <span class="selected-options-text" id="wb-tags-display">-- 点击选择或输入 --</span>
+                                <span class="arrow-down">▼</span>
+                            </div>
+                            <div id="world-book-tags-checkboxes" class="checkboxes-container">
+                                <!-- 标签复选框将由JS动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ▲▲▲ 全新代码结束 ▲▲▲ -->
                     <div class="form-group" style="height: 100%;">
                         <label for="world-book-content-input">内容</label>
                         <textarea id="world-book-content-input" placeholder="在此处输入详细的世界观设定..."></textarea>
                     </div>
+//【新代码结束】
                 </div>
             </div>
 
@@ -3719,7 +4028,12 @@ flex-shrink: 0;
 </div>
 <!-- ▲▲▲ 替换结束 ▲▲▲ -->
 
-            <div id="wallpaper-screen" class="screen"><div class="header"><span class="back-btn" onclick="showScreen('home-screen')">‹</span><span>壁纸设置</span><span style="width: 30px;"></span></div><div class="form-container"><div id="wallpaper-preview">点击下方上传</div><button class="form-button" onclick="document.getElementById('wallpaper-upload-input').click();">上传壁纸</button><input type="file" id="wallpaper-upload-input" accept="image/*"><button class="form-button" id="save-wallpaper-btn">保存并应用</button></div></div>
+            <div id="wallpaper-screen" class="screen"><div class="header"><span class="back-btn" onclick="showScreen('home-screen')">‹</span><span>壁纸设置</span><span style="width: 30px;"></span></div><div class="form-container"><div id="wallpaper-preview">点击下方上传</div><button class="form-button" onclick="document.getElementById('wallpaper-upload-input').click();">上传壁纸</button><input type="file" id="wallpaper-upload-input" accept="image/*">
+<hr style="margin: 30px 0; border: none; border-top: 1px solid #e0e0e0; opacity: 0.5;">
+<div id="custom-icons-container" style="width: 100%; display: flex; flex-direction: column; gap: 10px;">
+    <!-- 图标URL输入框将由JavaScript动态生成在这里 -->
+</div>
+<button class="form-button" id="save-wallpaper-btn">保存并应用</button></div></div>
 
 <div id="font-settings-screen" class="screen">
     <div class="header">
@@ -3857,17 +4171,29 @@ flex-shrink: 0;
     <!-- ▲▲▲ 新代码粘贴结束 ▲▲▲ -->
 
 <div class="form-group" id="my-group-nickname-group"><label for="my-group-nickname-input">我的群昵称</label><input type="text" id="my-group-nickname-input"></div><div class="form-group" id="group-avatar-group"><label>群头像</label><div class="avatar-upload"><img id="group-avatar-preview"><button onclick="document.getElementById('group-avatar-input').click()">上传群头像</button><input type="file" id="group-avatar-input" accept="image/*"></div></div>
+            <!-- ▼▼▼ 这是全新的、结构正确的关联世界书功能区 ▼▼▼ -->
             <div class="form-group" id="world-book-link-group">
-                <label>关联世界书 (可多选)</label>
+                
+                <!-- 1. 我们将标签和按钮放在一个独立的容器中，用flex布局实现并排 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <label style="margin-bottom: 0;">关联世界书 (可多选)</label>
+                    <button type="button" id="open-tag-import-drawer-btn" style="padding: 4px 10px; font-size: 12px; background: #e7f3ff; color: var(--accent-color); border:none; border-radius: 6px; cursor:pointer;">按标签导入</button>
+                </div>
+
+                <!-- 2. 这是标准的、干净的多选组件，JavaScript可以正确地找到它并绑定事件 -->
                 <div class="custom-multiselect">
                     <div class="select-box">
                         <span class="selected-options-text">-- 点击选择 --</span>
                         <span class="arrow-down">▼</span>
                     </div>
                     <div id="world-book-checkboxes-container" class="checkboxes-container">
+                        <!-- 复选框将由JS动态生成在这里 -->
                     </div>
                 </div>
+
             </div>
+            <!-- ▲▲▲ 全新代码块结束 ▲▲▲ -->
+
             <div class="form-group" id="ai-persona-group"><label for="ai-persona">对方人设 (AI Persona)</label><textarea id="ai-persona" rows="3"></textarea></div><div class="form-group" id="ai-avatar-group"><label>对方头像</label><div class="avatar-upload"><img id="ai-avatar-preview"><button onclick="document.getElementById('ai-avatar-input').click()">上传对方头像</button><input type="file" id="ai-avatar-input" accept="image/*"></div></div><div class="form-group" id="my-persona-group"><label for="my-persona">我的人设 (My Persona)</label><textarea id="my-persona" rows="3"></textarea></div><div class="form-group" id="my-avatar-group"><label>我的头像</label><div class="avatar-upload"><img id="my-avatar-preview"><button onclick="document.getElementById('my-avatar-input').click()">上传我的头像</button><button id="open-persona-library-btn">预设</button><input type="file" id="my-avatar-input" accept="image/*"></div></div><div class="form-group" id="group-members-group"><label>群成员人设</label><div id="group-members-settings"></div>
 
     <!-- 【新增】管理成员按钮 -->
@@ -4291,6 +4617,8 @@ flex-shrink: 0;
     </div>
 </div>
 <!-- ▲▲▲ 新HTML粘贴结束 ▲▲▲ -->
+
+
 <!-- ▼▼▼ 【全新】公告板模态框 ▼▼▼ -->
 <div id="bulletin-board-modal" class="modal">
     <div class="modal-content" style="height: 80%;">
@@ -4318,6 +4646,58 @@ flex-shrink: 0;
     </div>
 </div>
 <!-- ▲▲▲ 新HTML粘贴结束 ▲▲▲ -->
+
+<!-- ▼▼▼ 【全新】世界书标签导入抽屉面板 ▼▼▼ -->
+<div id="tag-import-overlay" class="drawer-overlay"></div>
+<div id="tag-import-drawer" class="drawer">
+    <div class="drawer-header">
+        <span class="drawer-title">按标签导入世界书</span>
+        <span class="drawer-close-btn">取消</span>
+    </div>
+    <div class="drawer-body">
+        <p style="font-size: 13px; color: var(--text-secondary); margin:0 0 15px 0;">请选择一个或多个标签，所有包含这些标签的世界书将被自动勾选。</p>
+        <div id="tag-import-list" class="checkboxes-container" style="display: block; position: static; border: none; max-height: 200px; box-shadow: none;">
+            <!-- 标签复选框将由JS动态生成 -->
+        </div>
+    </div>
+    <div class="drawer-footer">
+        <button class="form-button form-button-secondary" id="tag-import-clear-btn" style="width: auto; margin-top: 0;">重置选择</button>
+        <button class="form-button" id="tag-import-confirm-btn" style="width: auto; margin-top: 0; flex-grow: 1;">确认导入</button>
+    </div>
+</div>
+<!-- ▲▲▲ 新HTML粘贴结束 ▲▲▲ -->
+
+
+<!-- ▼▼▼ 【全新】世界书标签管理模态框 ▼▼▼ -->
+<div id="wb-tag-management-modal" class="modal">
+    <div class="modal-content" style="height: auto; max-height: 70%;">
+        <div class="modal-header">
+            <span>管理标签</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="new-wb-tag-input">新建标签</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="new-wb-tag-input" placeholder="输入新标签名，回车或点击添加" style="flex-grow: 1;">
+                    <button id="add-new-wb-tag-btn" class="form-button" style="width: auto; margin-top: 0; padding: 0 15px;">添加</button>
+                </div>
+            </div>
+            <hr style="opacity: 0.2; margin: 20px 0;">
+            <div class="form-group">
+                <label>已有标签</label>
+                <div id="existing-wb-tags-list" style="display: flex; flex-direction: column; gap: 10px;">
+                    <!-- 现有标签将由JS动态生成在这里 -->
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="save" id="close-wb-tag-manager-btn" style="width: 100%;">完成</button>
+        </div>
+    </div>
+</div>
+<!-- ▲▲▲ 新HTML粘贴结束 ▲▲▲ -->
+
+
 <!-- ▼▼▼ 【全新shep】备份版本选择模态框 ▼▼▼ -->
 <div id="restore-version-modal" class="modal">
     <div class="modal-content" style="width: 320px; height: auto;">
@@ -4342,7 +4722,7 @@ flex-shrink: 0;
         // ===================================================================
         const db = new Dexie('GeminiChatDB');
         // --- 已修正 ---
-        let state = { chats: {}, activeChatId: null, globalSettings: {}, apiConfig: {}, userStickers: [], worldBooks: [], personaPresets: [], qzoneSettings: {}, activeAlbumId: null };
+let state = { chats: {}, activeChatId: null, globalSettings: {}, apiConfig: {}, userStickers: [], worldBooks: [], worldBookTags: [], personaPresets: [], qzoneSettings: {}, activeAlbumId: null };
         // --- 修正结束 ---
         let musicState = { isActive: false, activeChatId: null, isPlaying: false, playlist: [], currentIndex: -1, playMode: 'order', totalElapsedTime: 0, timerId: null };
         const audioPlayer = document.getElementById('audio-player');
@@ -4500,22 +4880,23 @@ function showCustomPrompt(title, placeholder, initialValue = '', type = 'text', 
         // 2. 数据库结构定义
         // ===================================================================
 
-db.version(21).stores({ 
-    chats: '&id, isGroup, groupId', 
-    apiConfig: '&id', 
-    globalSettings: '&id', 
+db.version(22).stores({
+    chats: '&id, isGroup, groupId',
+    apiConfig: '&id',
+    globalSettings: '&id',
     userStickers: '&id, url, name',
-    worldBooks: '&id, name',
-    musicLibrary: '&id', 
+    worldBooks: '&id, name, *tags', // 为 worldBooks 添加 tags 索引
+    musicLibrary: '&id',
     personaPresets: '&id',
     qzoneSettings: '&id',
-    qzonePosts: '++id, timestamp, authorId', // <-- 为authorId添加索引
+    qzonePosts: '++id, timestamp, authorId',
     qzoneAlbums: '++id, name, createdAt',
     qzonePhotos: '++id, albumId',
     favorites: '++id, type, timestamp, originalTimestamp',
     qzoneGroups: '++id, name',
     memories: '++id, chatId, timestamp, type, targetDate',
-    bulletins: '++id, chatId, timestamp, isPinned' // <--- 【核心新增】这就是公告的新家！
+    bulletins: '++id, chatId, timestamp, isPinned',
+    worldBookTags: '&name' // 【核心新增】世界书标签专用表，用标签名作为索引
 });
 
         // ===================================================================
@@ -5104,7 +5485,7 @@ async function importBackup(file) {
 async function loadAllDataFromDB() {
     const [
         chatsArr, apiConfig, globalSettings, userStickers, worldBooks, 
-        musicLib, personaPresets, qzoneSettings, initialFavorites
+        musicLib, personaPresets, qzoneSettings, initialFavorites, worldBookTags
     ] = await Promise.all([
         db.chats.toArray(),
         db.apiConfig.get('main'),
@@ -5114,26 +5495,26 @@ async function loadAllDataFromDB() {
         db.musicLibrary.get('main'),
         db.personaPresets.toArray(),
         db.qzoneSettings.get('main'),
-        db.favorites.orderBy('timestamp').reverse().toArray()
+        db.favorites.orderBy('timestamp').reverse().toArray(),
+        db.worldBookTags.toArray() // 【核心新增】加载世界书标签
     ]);
+    
+    // 【核心新增】为旧的世界书数据添加空的tags数组，防止出错
+    worldBooks.forEach(book => {
+        if (!book.tags) {
+            book.tags = [];
+        }
+    });
+    state.worldBooks = worldBooks;
+    state.worldBookTags = worldBookTags.map(tag => tag.name); // 只存储标签名数组
+    // --- 以下为原有的加载逻辑，保持不变 ---
     state.chats = chatsArr.reduce((acc, chat) => {
-        // --- ▼▼▼ 【核心新增】状态系统兼容与初始化 ▼▼▼ ---
         if (!chat.statusState) {
             const lastAiMsg = chat.history.slice().reverse().find(m => m.role === 'assistant');
-            chat.statusState = {
-                lastAiActivityTime: lastAiMsg ? lastAiMsg.timestamp : Date.now(),
-                focusModeEndTime: null,
-                focusModeText: ""
-            };
-            console.log(`为旧角色 "${chat.name}" 补全了statusState属性。`);
+            chat.statusState = { lastAiActivityTime: lastAiMsg ? lastAiMsg.timestamp : Date.now(), focusModeEndTime: null, focusModeText: "" };
         }
-        // --- ▲▲▲ 新增结束 ▲▲▲
-        if (!chat.isGroup && !chat.relationship) {
-            chat.relationship = { status: 'friend', blockedTimestamp: null, applicationReason: '' };
-        }
-        if (!chat.status) {
-            chat.status = 'read';
-        }
+        if (!chat.isGroup && !chat.relationship) { chat.relationship = { status: 'friend', blockedTimestamp: null, applicationReason: '' }; }
+        if (!chat.status) { chat.status = 'read'; }
         if (!chat.musicData) chat.musicData = { totalTime: 0 };
         if (chat.settings && chat.settings.linkedWorldBookId && !chat.settings.linkedWorldBookIds) {
             chat.settings.linkedWorldBookIds = [chat.settings.linkedWorldBookId];
@@ -5146,7 +5527,6 @@ async function loadAllDataFromDB() {
     state.apiConfig = apiConfig || { id: 'main', proxyUrl: '', apiKey: '', model: '' };
     state.globalSettings = globalSettings || { id: 'main', wallpaper: 'linear-gradient(135deg, #89f7fe, #66a6ff)', fontUrl: '', enableBackgroundActivity: false, backgroundActivityInterval: 60, blockCooldownHours: 1, aiActionCooldownMinutes: 5 };
     state.userStickers = userStickers || [];
-    state.worldBooks = worldBooks || [];
     musicState.playlist = musicLib?.playlist || [];
     state.personaPresets = personaPresets || [];
     state.qzoneSettings = qzoneSettings || { id: 'main', nickname: '{{user}}', avatar: 'https://files.catbox.moe/q6z5fc.jpeg', banner: 'https://files.catbox.moe/r5heyt.gif' };
@@ -5705,15 +6085,190 @@ function renderChatInterface(chatId) {
 
         function loadMoreMessages() { const messagesContainer = document.getElementById('chat-messages'); const chat = state.chats[state.activeChatId]; if (!chat) return; const loadMoreBtn = document.getElementById('load-more-btn'); if (loadMoreBtn) loadMoreBtn.remove(); const totalMessages = chat.history.length; const nextSliceStart = totalMessages - currentRenderedCount - MESSAGE_RENDER_WINDOW; const nextSliceEnd = totalMessages - currentRenderedCount; const messagesToPrepend = chat.history.slice(Math.max(0, nextSliceStart), nextSliceEnd); const oldScrollHeight = messagesContainer.scrollHeight; messagesToPrepend.reverse().forEach(msg => prependMessage(msg, chat)); currentRenderedCount += messagesToPrepend.length; const newScrollHeight = messagesContainer.scrollHeight; messagesContainer.scrollTop += (newScrollHeight - oldScrollHeight); if (totalMessages > currentRenderedCount) { prependLoadMoreButton(messagesContainer); } }
 
-        function renderWallpaperScreen() { const preview = document.getElementById('wallpaper-preview'); const bg = newWallpaperBase64 || state.globalSettings.wallpaper; if (bg && bg.startsWith('data:image')) { preview.style.backgroundImage = `url(${bg})`; preview.textContent = ''; } else if(bg) { preview.style.backgroundImage = bg; preview.textContent = '当前为渐变色'; } }
+        function renderWallpaperScreen() {             const preview = document.getElementById('wallpaper-preview');
+            const bg = newWallpaperBase64 || state.globalSettings.wallpaper;
+            if (bg && bg.startsWith('data:image')) {
+                preview.style.backgroundImage = `url(${bg})`;
+                preview.textContent = '';
+            } else if(bg) {
+                preview.style.backgroundImage = bg;
+                preview.textContent = '当前为渐变色';
+            }
+            // 新增调用，用于渲染图标输入框
+            renderIconSettings();
+ }
         window.renderWallpaperScreenProxy = renderWallpaperScreen;
 
         function applyGlobalWallpaper() { const homeScreen = document.getElementById('home-screen'); const wallpaper = state.globalSettings.wallpaper; if (wallpaper && wallpaper.startsWith('data:image')) homeScreen.style.backgroundImage = `url(${wallpaper})`; else if (wallpaper) homeScreen.style.backgroundImage = wallpaper; }
 
-        function renderWorldBookScreen() { const listEl = document.getElementById('world-book-list'); listEl.innerHTML = ''; if (state.worldBooks.length === 0) { listEl.innerHTML = '<p style="text-align:center; color: #8a8a8a; margin-top: 50px;">点击右上角 "+" 创建你的第一本世界书</p>'; return; } state.worldBooks.forEach(book => { const item = document.createElement('div'); item.className = 'list-item'; item.dataset.bookId = book.id; item.innerHTML = `<div class="item-title">${book.name}</div><div class="item-content">${(book.content || '暂无内容...').substring(0, 50)}</div>`; item.addEventListener('click', () => openWorldBookEditor(book.id)); addLongPressListener(item, async () => { const confirmed = await showCustomConfirm('删除世界书', `确定要删除《${book.name}》吗？此操作不可撤销。`, { confirmButtonClass: 'btn-danger' }); if (confirmed) { await db.worldBooks.delete(book.id); state.worldBooks = state.worldBooks.filter(wb => wb.id !== book.id); renderWorldBookScreen(); } }); listEl.appendChild(item); }); }
-        window.renderWorldBookScreenProxy = renderWorldBookScreen;
+        /**
+         * 【优化后】渲染自定义图标的输入框
+         */
+        function renderIconSettings() {
+            const container = document.getElementById('custom-icons-container');
+            container.innerHTML = ''; // 清空旧内容
 
-        function openWorldBookEditor(bookId) { editingWorldBookId = bookId; const book = state.worldBooks.find(wb => wb.id === bookId); if (!book) return; document.getElementById('world-book-editor-title').textContent = book.name; document.getElementById('world-book-name-input').value = book.name; document.getElementById('world-book-content-input').value = book.content; showScreen('world-book-editor-screen'); }
+            const titleLabel = document.createElement('label');
+            titleLabel.style.textAlign = 'center';
+            titleLabel.style.marginBottom = '15px';
+            titleLabel.textContent = '自定义应用图标';
+            container.appendChild(titleLabel);
+
+            const appIcons = document.querySelectorAll('#app-grid .app-icon');
+            appIcons.forEach(appIcon => {
+                const labelEl = appIcon.querySelector('.label');
+                const imgEl = appIcon.querySelector('img');
+                if (!labelEl || !imgEl) return;
+
+                const appName = labelEl.textContent;
+                const iconId = `customIcon_${appName}`;
+                const savedUrl = localStorage.getItem(iconId);
+
+                // 【核心修改】根据是否存在已保存的URL，来决定输入框的值和提示文本
+                const inputValue = savedUrl ? savedUrl : '';
+                const placeholderText = '输入新图标的URL...';
+
+                const formGroup = document.createElement('div');
+                formGroup.className = 'form-group';
+                formGroup.style.display = 'flex';
+                formGroup.style.alignItems = 'center';
+                formGroup.style.gap = '10px';
+
+                formGroup.innerHTML = `
+                    <label for="icon-input-${appName}" style="flex-shrink: 0; width: 70px; text-align: right; margin-bottom: 0;">${appName}:</label>
+                    <input type="text" id="icon-input-${appName}" data-icon-id="${iconId}" value="${inputValue}" placeholder="${placeholderText}">
+                `;
+                container.appendChild(formGroup);
+            });
+        }
+
+
+        /**
+         * 【全新】应用保存在本地的自定义图标
+         */
+        function applyCustomIcons() {
+            const appIcons = document.querySelectorAll('#app-grid .app-icon');
+            appIcons.forEach(appIcon => {
+                const labelEl = appIcon.querySelector('.label');
+                const imgEl = appIcon.querySelector('img');
+                if (!labelEl || !imgEl) return;
+                
+                const appName = labelEl.textContent;
+                const iconId = `customIcon_${appName}`;
+                const savedUrl = localStorage.getItem(iconId);
+
+                if (savedUrl) {
+                    imgEl.src = savedUrl;
+                }
+            });
+        }
+
+
+//【你需要插入的地方】
+        // ▼▼▼ 【全新】世界书屏幕渲染函数 (支持标签过滤) ▼▼▼
+        function renderWorldBookScreen(activeTag = '全部') {
+            const filterBar = document.getElementById('world-book-tag-filter-bar');
+            const listContainer = document.getElementById('world-book-list-container');
+            filterBar.innerHTML = '';
+            listContainer.innerHTML = '';
+        
+            // 1. 渲染顶部的标签筛选栏
+            const allTags = ['全部', ...state.worldBookTags]; 
+            allTags.forEach(tag => {
+                const button = document.createElement('button');
+                button.className = 'wb-tag-filter';
+                button.textContent = tag === '未分类' ? tag : (tag === '全部' ? tag : `#${tag}`);
+                if (tag === activeTag) {
+                    button.classList.add('active');
+                }
+                button.addEventListener('click', () => renderWorldBookScreen(tag));
+                filterBar.appendChild(button);
+            });
+        
+            // 2. 根据激活的标签过滤要显示的世界书
+            let booksToRender;
+            if (activeTag === '全部') {
+                booksToRender = state.worldBooks;
+            } else if (activeTag === '未分类') {
+                booksToRender = state.worldBooks.filter(book => !book.tags || book.tags.length === 0);
+            } else {
+                booksToRender = state.worldBooks.filter(book => book.tags && book.tags.includes(activeTag));
+            }
+        
+            // 3. 渲染世界书列表
+            if (booksToRender.length === 0) {
+                listContainer.innerHTML = `<p style="text-align:center; color: #8a8a8a; margin-top: 50px;">这个分类下还没有世界书哦~</p>`;
+                return;
+            }
+        
+            booksToRender.forEach(book => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.dataset.bookId = book.id;
+        
+                // 将标签渲染成内嵌的小徽章
+                let tagsHtml = '';
+                if (book.tags && book.tags.length > 0) {
+                    tagsHtml = `<div class="item-tags-container">
+                        ${book.tags.map(tag => `<span class="item-tag">#${tag}</span>`).join('')}
+                    </div>`;
+                }
+        
+                item.innerHTML = `
+                    <div class="item-title">${book.name}</div>
+                    <div class="item-content">${(book.content || '暂无内容...').substring(0, 50)}...</div>
+                    ${tagsHtml}
+                `;
+                
+                item.addEventListener('click', () => openWorldBookEditor(book.id));
+                addLongPressListener(item, async () => {
+                    const confirmed = await showCustomConfirm('删除世界书', `确定要删除《${book.name}》吗？此操作不可撤销。`, { confirmButtonClass: 'btn-danger' });
+                    if (confirmed) {
+                        await db.worldBooks.delete(book.id);
+                        state.worldBooks = state.worldBooks.filter(wb => wb.id !== book.id);
+                        renderWorldBookScreen(activeTag); // 保持在当前分类刷新
+                    }
+                });
+                listContainer.appendChild(item);
+            });
+        }
+        // ▲▲▲ 新函数结束 ▲▲▲
+//【新代码结束】
+
+        window.renderWorldBookScreenProxy = renderWorldBookScreen;
+//【你需要插入的地方】
+        function openWorldBookEditor(bookId) {
+            editingWorldBookId = bookId;
+            const book = state.worldBooks.find(wb => wb.id === bookId);
+            if (!book) return;
+        
+            // 填充基础信息
+            document.getElementById('world-book-editor-title').textContent = book.name;
+            document.getElementById('world-book-name-input').value = book.name;
+            document.getElementById('world-book-content-input').value = book.content;
+            
+            // 【核心新增】填充标签选择器
+            const checkboxesContainer = document.getElementById('world-book-tags-checkboxes');
+            checkboxesContainer.innerHTML = ''; // 清空旧内容
+            const linkedTags = book.tags || [];
+        
+            if (state.worldBookTags.length > 0) {
+                state.worldBookTags.forEach(tag => {
+                    const isChecked = linkedTags.includes(tag);
+                    const label = document.createElement('label');
+                    label.innerHTML = `<input type="checkbox" value="${tag}" ${isChecked ? 'checked' : ''}> ${tag}`;
+                    checkboxesContainer.appendChild(label);
+                });
+            } else {
+                checkboxesContainer.innerHTML = '<p style="padding:10px; color: #8a8a8a; text-align: center;">还没有任何标签，请在“管理标签”中创建。</p>';
+            }
+        
+            // 更新已选标签的显示文本
+            updateWorldBookTagSelectionDisplay();
+        
+            showScreen('world-book-editor-screen');
+        }
+//【新代码结束】
 
         function renderStickerPanel() { const grid = document.getElementById('sticker-grid'); grid.innerHTML = ''; if (state.userStickers.length === 0) { grid.innerHTML = '<p style="text-align:center; color: var(--text-secondary); grid-column: 1 / -1;">大人请点击右上角“添加”或“上传”来添加你的第一个表情吧！</p>'; return; } state.userStickers.forEach(sticker => { const item = document.createElement('div'); item.className = 'sticker-item'; item.style.backgroundImage = `url(${sticker.url})`; item.title = sticker.name; item.addEventListener('click', () => sendSticker(sticker)); addLongPressListener(item, () => { if (isSelectionMode) return; const existingDeleteBtn = item.querySelector('.delete-btn'); if (existingDeleteBtn) return; const deleteBtn = document.createElement('div'); deleteBtn.className = 'delete-btn'; deleteBtn.innerHTML = '&times;'; deleteBtn.onclick = async (e) => { e.stopPropagation(); const confirmed = await showCustomConfirm('删除表情', `确定要删除表情 "${sticker.name}" 吗？`, { confirmButtonClass: 'btn-danger' }); if (confirmed) { await db.userStickers.delete(sticker.id); state.userStickers = state.userStickers.filter(s => s.id !== sticker.id); renderStickerPanel(); } }; item.appendChild(deleteBtn); deleteBtn.style.display = 'block'; setTimeout(() => item.addEventListener('mouseleave', () => deleteBtn.remove(), { once: true }), 3000); }); grid.appendChild(item); }); }
 
@@ -9977,11 +10532,109 @@ ${bulletinsContext}
             updateClock();
             setInterval(updateClock, 1000 * 30);
             applyGlobalWallpaper();
+            applyCustomIcons(); // 应用自定义图标
+
             initBatteryManager(); 
 
             // ==========================================================
             // --- 各种事件监听器 ---
             // ==========================================================
+            // ▼▼▼ 【全新】世界书标签导入功能相关函数和事件绑定 ▼▼▼
+            
+            // --- DOM元素获取 ---
+            const tagImportOverlay = document.getElementById('tag-import-overlay');
+            const tagImportDrawer = document.getElementById('tag-import-drawer');
+            const openTagImportBtn = document.getElementById('open-tag-import-drawer-btn');
+            const closeDrawerBtn = document.querySelector('.drawer-close-btn');
+            const confirmImportBtn = document.getElementById('tag-import-confirm-btn');
+            const clearImportBtn = document.getElementById('tag-import-clear-btn');
+            const tagImportListEl = document.getElementById('tag-import-list');
+
+            /**
+             * 渲染标签列表到抽屉中
+             */
+            function renderTagImportList() {
+                tagImportListEl.innerHTML = '';
+                if (state.worldBookTags.length === 0) {
+                    tagImportListEl.innerHTML = '<p style="text-align:center; color: var(--text-secondary);">还没有任何标签可供选择</p>';
+                    return;
+                }
+                state.worldBookTags.forEach(tag => {
+                    const label = document.createElement('label');
+                    label.innerHTML = `<input type="checkbox" value="${tag}"> #${tag}`;
+                    tagImportListEl.appendChild(label);
+                });
+            }
+
+            /**
+             * 打开抽屉面板
+             */
+            function openTagImportDrawer() {
+                renderTagImportList();
+                tagImportOverlay.classList.add('visible');
+                tagImportDrawer.classList.add('visible');
+            }
+
+            /**
+             * 关闭抽屉面板
+             */
+            function closeTagImportDrawer() {
+                tagImportOverlay.classList.remove('visible');
+                tagImportDrawer.classList.remove('visible');
+            }
+
+            /**
+             * 执行导入逻辑
+             */
+            function confirmTagImport() {
+                const selectedTags = Array.from(tagImportListEl.querySelectorAll('input:checked')).map(cb => cb.value);
+                if (selectedTags.length === 0) {
+                    alert('请至少选择一个标签。');
+                    return;
+                }
+            
+                const worldBookCheckboxes = document.querySelectorAll('#world-book-checkboxes-container input[type="checkbox"]');
+                
+                // 【核心逻辑优化】先取消所有复选框的勾选
+                worldBookCheckboxes.forEach(cb => cb.checked = false);
+            
+                let finalSelectedCount = 0;
+                // 遍历所有世界书，如果其标签匹配，则重新勾选对应的复选框
+                state.worldBooks.forEach(book => {
+                    const hasMatchingTag = book.tags && book.tags.some(tag => selectedTags.includes(tag));
+                    if (hasMatchingTag) {
+                        const checkboxToSelect = Array.from(worldBookCheckboxes).find(cb => cb.value === book.id);
+                        if (checkboxToSelect) {
+                            checkboxToSelect.checked = true;
+                            finalSelectedCount++; // 累加最终被选中的数量
+                        }
+                    }
+                });
+            
+                updateWorldBookSelectionDisplay();
+                closeTagImportDrawer();
+                // 【核心提示优化】根据您的要求，修改提示信息，使其更友好且准确
+                alert(`操作完成！共 ${finalSelectedCount} 本与“${selectedTags.join('、')}”标签相关的世界书已被勾选。`);
+            }
+
+            // --- 事件绑定 ---
+           openTagImportBtn.addEventListener('click', (event) => {
+                event.stopPropagation(); // 关键一步：停止事件冒泡，防止触发父元素的点击事件
+                openTagImportDrawer();   // 执行我们自己的打开抽屉功能
+            });
+
+            closeDrawerBtn.addEventListener('click', closeTagImportDrawer);
+            tagImportOverlay.addEventListener('click', closeTagImportDrawer);
+            confirmImportBtn.addEventListener('click', confirmTagImport);
+            clearImportBtn.addEventListener('click', () => {
+                // 重置抽屉内的所有复选框
+                tagImportListEl.querySelectorAll('input:checked').forEach(cb => cb.checked = false);
+            });
+            
+            // ▲▲▲ 新功能代码结束 ▲▲▲
+
+
+
 // ▼▼▼ 【全新】公告板功能事件绑定 ▼▼▼
 document.getElementById('open-bulletin-board-btn').addEventListener('click', openBulletinBoard);
 document.getElementById('close-bulletin-board-btn').addEventListener('click', () => {
@@ -10095,7 +10748,40 @@ document.getElementById('add-group-chat-btn').addEventListener('click', openCont
             chatInput.addEventListener('input', () => { chatInput.style.height = 'auto'; chatInput.style.height = (chatInput.scrollHeight) + 'px'; });
 
             document.getElementById('wallpaper-upload-input').addEventListener('change', async (event) => { const file = event.target.files[0]; if(file) { const dataUrl = await new Promise((res, rej) => { const reader = new FileReader(); reader.onload = () => res(reader.result); reader.onerror = () => rej(reader.error); reader.readAsDataURL(file); }); newWallpaperBase64 = dataUrl; renderWallpaperScreen(); } });
-            document.getElementById('save-wallpaper-btn').addEventListener('click', async () => { if (newWallpaperBase64) { state.globalSettings.wallpaper = newWallpaperBase64; await db.globalSettings.put(state.globalSettings); applyGlobalWallpaper(); newWallpaperBase64 = null; alert('壁纸已保存并应用！'); showScreen('home-screen'); } else alert('请先上传一张新壁纸。'); });
+                        document.getElementById('save-wallpaper-btn').addEventListener('click', async () => {
+                let settingsChanged = false;
+
+                // 1. 保存壁纸逻辑 (保持不变)
+                if (newWallpaperBase64) {
+                    state.globalSettings.wallpaper = newWallpaperBase64;
+                    settingsChanged = true;
+                }
+
+                // 2.【新增】保存自定义图标逻辑
+                const iconInputs = document.querySelectorAll('#custom-icons-container input');
+                iconInputs.forEach(input => {
+                    const iconId = input.dataset.iconId;
+                    const newUrl = input.value.trim();
+                    if (iconId && newUrl) {
+                        localStorage.setItem(iconId, newUrl);
+                    } else if (iconId) {
+                        // 如果输入框被清空，则移除本地存储，恢复默认
+                        localStorage.removeItem(iconId);
+                    }
+                });
+                
+                // 3. 应用所有更改
+                if (settingsChanged) {
+                    await db.globalSettings.put(state.globalSettings);
+                    applyGlobalWallpaper();
+                }
+                applyCustomIcons(); // 立即应用新的图标
+                newWallpaperBase64 = null; // 清空壁纸缓存
+
+                alert('设置已保存并应用！');
+                showScreen('home-screen');
+            });
+
           
 document.getElementById('save-api-settings-btn').addEventListener('click', async () => {
                 // ▼▼▼ 新增校验逻辑 ▼▼▼
@@ -10187,7 +10873,30 @@ alert('API设置已保存!'); });
             });
 
             document.getElementById('add-world-book-btn').addEventListener('click', async () => { const name = await showCustomPrompt('创建世界书', '请输入书名'); if (name && name.trim()) { const newBook = { id: 'wb_' + Date.now(), name: name.trim(), content: '' }; await db.worldBooks.add(newBook); state.worldBooks.push(newBook); renderWorldBookScreen(); openWorldBookEditor(newBook.id); } });
-            document.getElementById('save-world-book-btn').addEventListener('click', async () => { if (!editingWorldBookId) return; const book = state.worldBooks.find(wb => wb.id === editingWorldBookId); if (book) { const newName = document.getElementById('world-book-name-input').value.trim(); if (!newName) { alert('书名不能为空！'); return; } book.name = newName; book.content = document.getElementById('world-book-content-input').value; await db.worldBooks.put(book); document.getElementById('world-book-editor-title').textContent = newName; editingWorldBookId = null; renderWorldBookScreen(); showScreen('world-book-screen'); } });
+document.getElementById('save-world-book-btn').addEventListener('click', async () => {
+                if (!editingWorldBookId) return;
+                const book = state.worldBooks.find(wb => wb.id === editingWorldBookId);
+                if (book) {
+                    const newName = document.getElementById('world-book-name-input').value.trim();
+                    if (!newName) {
+                        alert('书名不能为空！');
+                        return;
+                    }
+                    book.name = newName;
+                    book.content = document.getElementById('world-book-content-input').value;
+                    
+                    // 【核心新增】收集并保存选中的标签
+                    const checkedBoxes = document.querySelectorAll('#world-book-tags-checkboxes input:checked');
+                    book.tags = Array.from(checkedBoxes).map(cb => cb.value);
+            
+                    await db.worldBooks.put(book);
+                    document.getElementById('world-book-editor-title').textContent = newName;
+                    editingWorldBookId = null;
+                    renderWorldBookScreen(); // 刷新列表
+                    showScreen('world-book-screen');
+                }
+            });
+//【新代码结束】
 
              document.getElementById('chat-messages').addEventListener('click', (e) => {
             // 处理图片弹窗（逻辑保留）
@@ -10249,13 +10958,29 @@ return; // 处理完语音点击后，直接返回
 //【粘贴到这里结束】
             
             const chatSettingsModal = document.getElementById('chat-settings-modal');
-            const worldBookSelectBox = document.querySelector('.custom-multiselect .select-box');
+                        const worldBookSelectBox = document.querySelector('#chat-settings-modal .custom-multiselect .select-box');
             const worldBookCheckboxesContainer = document.getElementById('world-book-checkboxes-container');
-function updateWorldBookSelectionDisplay() { const checkedBoxes = worldBookCheckboxesContainer.querySelectorAll('input:checked'); const displayText = document.querySelector('.selected-options-text'); if (checkedBoxes.length === 0) { displayText.textContent = '-- 点击选择 --'; } else if (checkedBoxes.length > 2) { displayText.textContent = `已选择 ${checkedBoxes.length} 项`; } else { displayText.textContent = Array.from(checkedBoxes).map(cb => cb.parentElement.textContent.trim()).join(', '); } }        
+function updateWorldBookSelectionDisplay() {
+                // 【核心修正】这里的选择器增加了 #chat-settings-modal 前缀，确保只操作聊天设置弹窗内的元素。
+                const displayText = document.querySelector('#chat-settings-modal .selected-options-text');
+                if (!displayText) return; // 如果找不到元素，直接退出，增加代码健壮性
+                const checkedBoxes = worldBookCheckboxesContainer.querySelectorAll('input:checked');
+                if (checkedBoxes.length === 0) {
+                    displayText.textContent = '-- 点击选择 --';
+                } else if (checkedBoxes.length > 2) {
+                    displayText.textContent = `已选择 ${checkedBoxes.length} 项`;
+                } else {
+                    displayText.textContent = Array.from(checkedBoxes).map(cb => cb.parentElement.textContent.trim()).join(', ');
+                }
+            }     
             
             worldBookSelectBox.addEventListener('click', (e) => { e.stopPropagation(); worldBookCheckboxesContainer.classList.toggle('visible'); worldBookSelectBox.classList.toggle('expanded'); });
             document.getElementById('world-book-checkboxes-container').addEventListener('change', updateWorldBookSelectionDisplay);
-            window.addEventListener('click', (e) => { if (!document.querySelector('.custom-multiselect').contains(e.target)) { worldBookCheckboxesContainer.classList.remove('visible'); worldBookSelectBox.classList.remove('expanded'); } });
+            // 【新增】为下拉框容器添加 click 事件监听，并阻止其冒泡。这样就不会触发 window 上的关闭事件了。
+            document.getElementById('world-book-checkboxes-container').addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            window.addEventListener('click', (e) => { if (!document.querySelector('#chat-settings-modal .custom-multiselect').contains(e.target)) { worldBookCheckboxesContainer.classList.remove('visible'); worldBookSelectBox.classList.remove('expanded'); } });
 
 // ▼▼▼ 请用这段【完整、全新的代码】替换旧的 chat-settings-btn 点击事件 ▼▼▼
 document.getElementById('chat-settings-btn').addEventListener('click', async () => {
@@ -10331,6 +11056,8 @@ document.getElementById('background-activity-switch-chat').checked = chat.settin
             worldBookCheckboxesContainer.appendChild(label);
         });
     }
+    // --- 【新增】加载世界书的所有标签，为“按标签导入”功能准备数据 ---
+    state.worldBookTags = [...new Set(state.worldBooks.flatMap(book => book.tags || []))];
     updateWorldBookSelectionDisplay();
 
     // 加载并更新所有预览相关控件
@@ -11890,6 +12617,141 @@ function openChat(chatId) {
 document.getElementById('open-bulletin-board-btn').style.display = chat.isGroup ? 'flex' : 'none';
 
 }
+            // ▼▼▼ 【全新】世界书标签选择器相关函数和事件 ▼▼▼
+            function updateWorldBookTagSelectionDisplay() {
+                const checkboxesContainer = document.getElementById('world-book-tags-checkboxes');
+                const checkedBoxes = checkboxesContainer.querySelectorAll('input:checked');
+                const displayText = document.getElementById('wb-tags-display');
+            
+                if (checkedBoxes.length === 0) {
+                    displayText.textContent = '-- 点击选择或输入 --';
+                } else if (checkedBoxes.length > 2) {
+                    displayText.textContent = `已选择 ${checkedBoxes.length} 个标签`;
+                } else {
+                    displayText.textContent = Array.from(checkedBoxes).map(cb => `#${cb.value}`).join(', ');
+                }
+            }
+
+            const wbTagsSelectBox = document.querySelector('#world-book-editor-screen .select-box');
+            const wbTagsCheckboxesContainer = document.getElementById('world-book-tags-checkboxes');
+            
+            wbTagsSelectBox.addEventListener('click', (e) => {
+                e.stopPropagation();
+                wbTagsCheckboxesContainer.classList.toggle('visible');
+                wbTagsSelectBox.classList.toggle('expanded');
+            });
+
+            wbTagsCheckboxesContainer.addEventListener('change', updateWorldBookTagSelectionDisplay);
+            // ▲▲▲ 新代码结束 ▲▲▲
+
+// ▼▼▼ 【全新】世界书标签管理功能 ▼▼▼
+
+/**
+ * 打开并渲染标签管理模态框
+ */
+async function openWbTagManager() {
+    const modal = document.getElementById('wb-tag-management-modal');
+    const listEl = document.getElementById('existing-wb-tags-list');
+    listEl.innerHTML = '';
+    
+    // 渲染现有标签列表
+    if (state.worldBookTags.length === 0) {
+        listEl.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">还没有任何标签</p>';
+    } else {
+        state.worldBookTags.forEach(tag => {
+            const item = document.createElement('div');
+            item.className = 'existing-tag-item';
+            item.innerHTML = `
+                <span class="tag-name"># ${tag}</span>
+                <span class="delete-tag-btn" data-tag-name="${tag}">×</span>
+            `;
+            listEl.appendChild(item);
+        });
+    }
+    modal.classList.add('visible');
+}
+
+/**
+ * 添加一个新的世界书标签
+ */
+async function addNewWbTag() {
+    const input = document.getElementById('new-wb-tag-input');
+    const tagName = input.value.trim();
+    if (!tagName) {
+        alert('标签名不能为空！');
+        return;
+    }
+
+    const existingTag = state.worldBookTags.find(t => t.toLowerCase() === tagName.toLowerCase());
+    if (existingTag) {
+        alert(`标签 #${existingTag} 已经存在了，换个名字吧！`);
+        return;
+    }
+
+    await db.worldBookTags.add({ name: tagName });
+    await loadAllDataFromDB(); // 重新加载最新数据
+    await openWbTagManager(); // 重新渲染管理列表
+    input.value = ''; // 清空输入框
+}
+
+/**
+ * 删除一个世界书标签
+ * @param {string} tagName - 要删除的标签名
+ */
+async function deleteWbTag(tagName) {
+    const confirmed = await showCustomConfirm('删除标签', `确定要删除标签 #${tagName} 吗？这会从所有已关联的世界书中移除此标签，此操作无法恢复。`, { confirmButtonClass: 'btn-danger' });
+    if(confirmed) {
+        // 1. 从标签表中删除
+        await db.worldBookTags.where('name').equalsIgnoreCase(tagName).delete();
+        
+        // 2. 从所有世界书的tags数组中移除这个标签
+        const booksWithTag = await db.worldBooks.where('tags').equals(tagName).toArray();
+        for(const book of booksWithTag) {
+            book.tags = book.tags.filter(t => t !== tagName);
+            await db.worldBooks.put(book);
+        }
+
+        // 3. 重新加载最新数据并刷新UI
+        await loadAllDataFromDB(); 
+        await openWbTagManager();
+        renderWorldBookScreen(); // 确保主界面的标签筛选也更新
+        alert(`标签 #${tagName} 已成功删除。`);
+    }
+}
+
+// --- 事件绑定 ---
+
+// 1. “管理”按钮现在打开新的模态框
+document.getElementById('manage-wb-tags-btn').addEventListener('click', openWbTagManager);
+
+// 2. 模态框内的“添加”按钮
+document.getElementById('add-new-wb-tag-btn').addEventListener('click', addNewWbTag);
+
+// 3. 在输入框内按回车键也可以添加
+document.getElementById('new-wb-tag-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addNewWbTag();
+    }
+});
+
+// 4. 使用事件委托来处理删除按钮的点击
+document.getElementById('existing-wb-tags-list').addEventListener('click', (e) => {
+    if (e.target.classList.contains('delete-tag-btn')) {
+        const tagName = e.target.dataset.tagName;
+        deleteWbTag(tagName);
+    }
+});
+
+// 5. 模态框的“完成”按钮
+document.getElementById('close-wb-tag-manager-btn').addEventListener('click', () => {
+    document.getElementById('wb-tag-management-modal').classList.remove('visible');
+});
+
+// ▲▲▲ 新代码结束 ▲▲▲
+
+
+
 // ==========================================================
 // --- 云端备份与恢复 (V2 - 版本选择) ---
 // ==========================================================
