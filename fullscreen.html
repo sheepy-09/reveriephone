@@ -3099,6 +3099,42 @@ flex-shrink: 0;
 }
 /* ▲▲▲ 新CSS粘贴结束 ▲▲▲ */
 
+/* ▼▼▼ 【全新】红包模态框页签样式 - 请将这段CSS粘贴到样式表末尾 ▼▼▼ */
+.frame-tabs {
+    display: flex;
+    background-color: #f7f7f7;
+    border-bottom: 1px solid var(--border-color);
+}
+.frame-tab {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s, font-weight 0.2s;
+}
+.frame-tab.active {
+    color: var(--accent-color);
+    font-weight: 600;
+}
+.frame-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; /* 贴紧边框 */
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background-color: var(--accent-color);
+    border-radius: 1px;
+}
+.frame-content {
+    display: none; /* 默认隐藏所有内容区 */
+}
+/* ▲▲▲ 新CSS粘贴结束 ▲▲▲ */
+
+
 /* ▼▼▼ 【全新】投票功能样式 ▼▼▼ */
 
 /* 投票卡片在消息气泡中的样式 */
@@ -3562,8 +3598,6 @@ flex-shrink: 0;
     display: flex;
     gap: 10px;
 }
-/* ▲▲▲ 新CSS粘贴结束 ▲▲▲ */
-
 
     </style>
 </head>
@@ -3572,7 +3606,7 @@ flex-shrink: 0;
         <div class="notch"></div>
         <div id="phone-screen">
             <div id="status-bar">
-                <span id="status-bar-time">12:00</span>
+  <span id="status-bar-time">12:00</span>
                 <div id="status-bar-battery" class="battery-container">
                     <span class="battery-text">--%</span>
                     <div class="battery-icon">
@@ -6659,7 +6693,8 @@ function openChat(chatId) {
     // ...包括了那个出问题的 switch 语句.. // ...函数内部有大量的代码...
     // ...包括了那个出问题的 switch 语句.. // ...函数内部有大量的代码...
     // ...包括了那个出问题的 switch 语句..
-// ▼▼▼ 【这是已修复语法错误的最终版，请用它替换】 ▼▼▼
+
+// ▼▼▼ 【这是优化后的最终版，请用它替换旧的 triggerAiResponse 函数】 ▼▼▼
 async function triggerAiResponse() {
     if (!state.activeChatId) return;
     const chatId = state.activeChatId;
@@ -6717,7 +6752,6 @@ async function triggerAiResponse() {
 
         const now = new Date();
         const currentTime = now.toLocaleString('zh-CN', { dateStyle: 'full', timeStyle: 'short' });
-        //... [The rest of the massive prompt generation logic remains here]
         let worldBookContent = '';
         if (chat.settings.linkedWorldBookIds && chat.settings.linkedWorldBookIds.length > 0) {
             const linkedContents = chat.settings.linkedWorldBookIds.map(bookId => {
@@ -6745,7 +6779,7 @@ async function triggerAiResponse() {
             const bulletinsContext = await getFormattedPinnedBulletins(chatId);
             systemPrompt = `
 # 你的任务与核心规则
-你是一个顶级的群聊AI，你的【唯一任务】是扮演多个角色，并确保他们的行为和对话完全符合设定。
+你是一个顶级的群聊AI，你的【唯一任务】是扮演多个角色，创造沉浸式的互动体验。为保证对话饱满，每次回应【通常应包含3-8条消息】。此数量为指导原则，旨在鼓励角色间进行充分、连贯且有逻辑的互动，而非僵硬的指标。请优先确保对话质量。角色间的对话需要相互关联，能够对彼此的发言、情绪和潜在意图做出反应，形成连贯的对话流，而不是各自独立发言。
 ## 【【【最高指令：身份铁律】】】
 1.  **禁止扮演用户**: 用户的身份是【${myNickname}】。你【绝对、永远、在任何情况下都不能】生成 \`name\` 字段为 **"${myNickname}"** 的消息。
 2.  **【【【至关重要：禁止剧情化群名】】】**: 当前群聊的名称是 **“${chat.name}”**。这个名称【仅仅是一个标签】，【不包含任何背景故事或剧情】。你【绝对禁止】对这个名称进行任何形式的联想、解读、或将其作为对话的素材。你的所有回应都【必须】聚焦于群成员之间的互动和对话本身。
@@ -6757,9 +6791,13 @@ async function triggerAiResponse() {
 1.  **角色扮演**: 严格遵守下方“群成员列表及人设”中的每一个角色的设定。
 2.  **禁止出戏**: 绝不能透露你是AI、模型，或提及“扮演”、“生成”等词语。
 3.  **情景感知**: 注意当前时间是 ${currentTime}。
-4.  **红包互动**:
-    - **抢红包**: 当群里出现红包时，你可以根据自己的性格决定是否使用 \`open_red_packet\` 指令去抢。在这个世界里，发红包的人自己也可以参与搶紅包，这是一种活跃气氛的有趣行为！
-    - **【【【重要：对结果做出反应】】】**: 当你执行抢红包指令后，系统会通过一条隐藏的 \`[系统提示：你抢到了XX元...]\` 来告诉你结果。你【必须】根据你抢到的金额、以及系统是否告知你“手气王”是谁，来发表符合你人设的评论。例如，抢得少可以自嘲，抢得多可以炫耀，看到别人是手气王可以祝贺或嫉妒。
+4.  **【【【红包互动规则】】】**:
+    *   **感知红包**: 对话历史中可能会出现 \`[系统提示：...发了一个红包...]\` 的消息。
+    *   **【【灵动决策】】**: 当你看到这个提示时，你【必须】根据自己扮演的角色的性格和聊天记录，【自主决定】是否要领取这个红包。
+ *   **【专属红包判断】**: 如果系统提示这是一个“专属红包”，你【必须】先检查“指定接收人”是不是【你自己的名字】。只有在接收人是你自己时，你才能使用 \`open_red_packet\` 指令。如果不是给你的，你【绝对不能】尝试领取，但可以发表旁观评论。
+        *   **如果决定领**: 你的回复JSON数组中【必须】包含一条 \`"type": "open_red_packet"\` 的指令，并可以紧跟你决定领红包时的即时发言（如“哇！都别拦我我要抢。”）。
+        *   **如果决定不领**: 你的回复JSON数组中【不能】包含 \`"type": "open_red_packet"\` 指令。你可以选择对此发表一句旁观评论（如“我不需要。收回去吧。”），或者完全忽略它继续其他话题。
+    *   **【【重要：对结果做出反应】】**: 当你使用了 \`open_red_packet\` 指令后，系统会通过一条新的、对你可见的隐藏提示（例如 \`[系统提示：你抢到了8.88元...]\`）来告诉你结果。在下一次轮到你发言时，你【必须】根据这个结果，发表符合你人设的、与金额匹配的评论（例如，抢到大包的欣喜、抢到一分钱的自嘲、没抢到的失落等）。
 5.  **【【【投票规则】】】**: 对话历史中可能会出现 \`[系统提示：...]\` 这样的消息，这是刚刚发生的事件。
     - 如果提示是**用户投了票**，你可以根据自己的性格决定是否也使用 "vote" 指令跟票。
     - 如果提示是**投票已结束**，你应该根据投票结果发表你的看法或评论。
@@ -6821,10 +6859,34 @@ ${bulletinsContext}
                 else if (msg.type === 'waimai_request') {
                     if (msg.status === 'paid') { content = `[系统提示：${msg.paidBy} 为 ${sender} 的外卖订单支付了 ${msg.amount} 元。此订单已完成。]`; }
                     else { content = `[${sender} 发起了外卖代付请求，商品是“${msg.productInfo}”，金额是 ${msg.amount} 元，订单时间戳为 ${msg.timestamp}]`; }
-                } else if (msg.type === 'red_packet') {
-                    const packetSenderName = msg.senderName === myNickname ? `用户 (${myNickname})` : msg.senderName;
-                    content = `[系统提示：${packetSenderName} 发送了一个红包 (时间戳: ${msg.timestamp})，祝福语是：“${msg.greeting}”。红包还未领完，你可以使用 'open_red_packet' 指令来领取。]`;
-                } else if (msg.type === 'poll') {
+                } 
+
+else if (msg.type === 'red_packet') {
+                const packetSenderName = msg.senderName === myNickname ? `用户 (${myNickname})` : msg.senderName;
+                // 如果红包已被领完
+                if (msg.isFullyClaimed) {
+                    let luckyKingInfo = '';
+                    if (msg.packetType === 'lucky' && msg.count > 1) {
+                         let luckyKing = { name: '', amount: -1 };
+                         Object.entries(msg.claimedBy).forEach(([name, amount]) => { if (amount > luckyKing.amount) { luckyKing = { name, amount }; } });
+                         if(luckyKing.name) luckyKingInfo = `手气王是 ${luckyKing.name}。`;
+                    }
+                    content = `[系统提示：${packetSenderName} 发的红包 (时间戳: ${msg.timestamp}) 已被领完。${luckyKingInfo} 你现在可以对此发表评论。]`;
+                } 
+                // 如果红包还没领完
+                else {
+                    // 【【核心修改】】在这里判断红包类型
+                    if (msg.packetType === 'direct') {
+                        // 专属红包的提示
+                        content = `[系统提示：${packetSenderName} 发送了一个<类型:专属红包> (时间戳: ${msg.timestamp})，指定接收人是【${msg.receiverName}】。红包还未被领取。]`;
+                    } else {
+                        // 拼手气红包的提示
+                        content = `[系统提示：${packetSenderName} 发送了一个<类型:拼手气红包> (时间戳: ${msg.timestamp})，祝福语是：“${msg.greeting}”。红包还未领完，你可以根据你的性格决定是否使用 'open_red_packet' 指令来领取。]`;
+                    }
+                }
+            }
+
+else if (msg.type === 'poll') {
                     const whoVoted = Object.values(msg.votes || {}).flat().join(', ') || '还没有人';
                     content = `[系统提示：${msg.senderName} 发起了一个投票 (时间戳: ${msg.timestamp})，问题是：“${msg.question}”，选项有：[${msg.options.join(', ')}]。目前投票的人有：${whoVoted}。你可以使用 'vote' 指令参与投票。]`;
                 } else if (msg.type === 'bulletin') { content = `[系统提示：成员 ${msg.authorName} 刚刚发布了一条公告：“${msg.content}”。]`; }
@@ -6985,7 +7047,6 @@ ${worldBookContent}
             let aiMessage = null;
             const baseMessage = { role: 'assistant', senderName: msgData.name || chat.name, timestamp: messageTimestamp++ };
             switch (msgData.type) {
-                // ... [The entire massive switch statement logic remains here] ...
                 case 'ask_to_create_bulletin':
                     const askMessage = { role: 'system', type: 'pat_message', content: `${msgData.name} 提议：“${msgData.content}”，要不要记到公告板上？`, timestamp: baseMessage.timestamp, isTemporary: true, actions: [ { label: '[同意记录]', action: 'confirm_bulletin', data: { authorName: msgData.name, content: msgData.content } }, { label: '[算了]', action: 'decline_bulletin' } ]};
                     chat.history.push(askMessage);
@@ -7071,28 +7132,49 @@ ${worldBookContent}
                 case 'open_red_packet':
                     const packetToOpen = chat.history.find(m => m.timestamp === msgData.packet_timestamp);
                     if (packetToOpen && !packetToOpen.isFullyClaimed && !(packetToOpen.claimedBy && packetToOpen.claimedBy[msgData.name])) {
+// 如果是专属红包，则强制校验接收人是否为当前操作的AI
+                    if (packetToOpen.packetType === 'direct' && packetToOpen.receiverName !== msgData.name) {
+                        console.warn(`[安全拦截] AI角色 "${msgData.name}" 尝试领取不属于自己的专属红包 (接收人: ${packetToOpen.receiverName})，操作已被阻止。`);
+                        continue; // 跳过此次循环，不执行后续的领包逻辑
+                    }
                         let claimedAmountAI = 0;
+
                         const remainingAmount = packetToOpen.totalAmount - Object.values(packetToOpen.claimedBy || {}).reduce((sum, val) => sum + val, 0);
                         const remainingCount = packetToOpen.count - Object.keys(packetToOpen.claimedBy || {}).length;
                         if (remainingCount > 0) {
-                            if (remainingCount === 1) { claimedAmountAI = remainingAmount; }
-                            else { const min = 0.01; const max = remainingAmount - (remainingCount - 1) * min; claimedAmountAI = Math.random() * (max - min) + min; }
+                            if (packetToOpen.packetType === 'lucky') {
+                                if (remainingCount === 1) { claimedAmountAI = remainingAmount; }
+                                else { const min = 0.01; const max = remainingAmount - (remainingCount - 1) * min; claimedAmountAI = Math.random() * (max - min) + min; }
+                            } else { 
+                                claimedAmountAI = packetToOpen.totalAmount;
+                            }
                             claimedAmountAI = parseFloat(claimedAmountAI.toFixed(2));
                             if (!packetToOpen.claimedBy) packetToOpen.claimedBy = {};
                             packetToOpen.claimedBy[msgData.name] = claimedAmountAI;
-                            chat.history.push({ role: 'system', type: 'pat_message', content: `${msgData.name} 领取了 ${packetToOpen.senderName} 的红包`, timestamp: Date.now() });
-                            let hiddenContentForAI = `[系统提示：你 (${msgData.name}) 成功抢到了 ${claimedAmountAI.toFixed(2)} 元。`;
+                            const visiblePatMessage = { role: 'system', type: 'pat_message', content: `${msgData.name} 领取了 ${packetToOpen.senderName} 的红包`, timestamp: Date.now() };
+                            chat.history.push(visiblePatMessage);
+                            if (isViewingThisChat) appendMessage(visiblePatMessage, chat);
                             if (Object.keys(packetToOpen.claimedBy).length >= packetToOpen.count) {
                                 packetToOpen.isFullyClaimed = true;
-                                chat.history.push({ role: 'system', type: 'pat_message', content: `${packetToOpen.senderName} 的红包已被领完`, timestamp: Date.now() + 1 });
+                                const finishedMessage = { role: 'system', type: 'pat_message', content: `${packetToOpen.senderName} 的红包已被领完`, timestamp: Date.now() + 1 };
+                                chat.history.push(finishedMessage);
+                                if (isViewingThisChat) appendMessage(finishedMessage, chat);
+                            }
+                            let hiddenContentForAI = `[系统提示：你 (${msgData.name}) 成功抢到了 ${claimedAmountAI.toFixed(2)} 元。`;
+                            if (packetToOpen.isFullyClaimed) {
                                 let luckyKing = { name: '', amount: -1 };
-                                if (packetToOpen.packetType === 'lucky' && packetToOpen.count > 1) { Object.entries(packetToOpen.claimedBy).forEach(([name, amount]) => { if (amount > luckyKing.amount) { luckyKing = { name, amount }; } }); }
-                                if (luckyKing.name) { hiddenContentForAI += ` 红包已被领完，手气王是 ${luckyKing.name}！`; } else { hiddenContentForAI += ` 红包已被领完。`; }
+                                if (packetToOpen.packetType === 'lucky' && packetToOpen.count > 1) {
+                                    Object.entries(packetToOpen.claimedBy).forEach(([name, amount]) => { if (amount > luckyKing.amount) { luckyKing = { name, amount }; } });
+                                }
+                                if (luckyKing.name) {
+                                    hiddenContentForAI += ` 红包已被领完，手气王是 ${luckyKing.name}！`;
+                                } else {
+                                    hiddenContentForAI += ` 红包已被领完。`;
+                                }
                             }
                             hiddenContentForAI += ' 请根据这个结果发表你的评论。]';
                             chat.history.push({ role: 'system', content: hiddenContentForAI, timestamp: Date.now() + 2, isHidden: true });
                         }
-                        if (isViewingThisChat) { renderChatInterface(chatId); }
                     }
                     continue;
                 case 'system_message':
@@ -7126,10 +7208,7 @@ ${worldBookContent}
         }
         
         if (isViewingThisChat) {
-            for (const msg of chat.history.slice(chat.history.length - messagesArray.length)) {
-                appendMessage(msg, chat);
-                await new Promise(resolve => setTimeout(resolve, Math.random() * 500 + 200));
-            }
+            renderChatInterface(chatId);
         }
         
         const firstNewMessage = chat.history.find(m => m.timestamp >= now && !m.isHidden);
@@ -7185,12 +7264,11 @@ ${worldBookContent}
         document.getElementById('typing-indicator').style.display = 'none';
         if (isViewingThisChatAfterResponse) {
             updateChatHeaderStatus(chat);
-} 
+        } 
         renderChatList();
     }
 }
 // ▲▲▲ 替换结束 ▲▲▲
-
 
 // <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码
 // <--- 在这里添加这行代码
@@ -8468,6 +8546,7 @@ async function handleCreateGroup() {
  isBackgroundActivityEnabled: true // <--【核心新增】默认开启
         },
         history: [],
+	statusState: { lastAiActivityTime: Date.now() },
         musicData: { totalTime: 0 }
     };
 
@@ -10908,7 +10987,28 @@ document.getElementById('save-world-book-btn').addEventListener('click', async (
                 if (description) showCustomAlert('照片描述', description);
                 return;
             }
-            
+
+            // 【新增】处理“点击消除空回提示”的逻辑
+            const messageBubble = e.target.closest('.message-bubble');
+            if (messageBubble && messageBubble.textContent.includes('小雀温馨提示：此条空回！')) {
+                // 1. 从DOM中直接移除这个气泡，实现即时消除的视觉效果
+                const wrapper = messageBubble.closest('.message-wrapper');
+                if (wrapper) {
+                    wrapper.remove();
+                }
+                // 2. 从聊天历史记录中也移除这条临时消息，确保数据一致性
+                const timestamp = parseInt(messageBubble.dataset.timestamp);
+                const chat = state.chats[state.activeChatId];
+                if (chat) {
+                    const messageIndex = chat.history.findIndex(m => m.timestamp === timestamp && m.isTemporary);
+                    if (messageIndex > -1) {
+                        chat.history.splice(messageIndex, 1);
+                    }
+                }
+                
+                return; // 处理完毕，退出事件监听
+            }
+
             // 【全新】处理语音点击展开/收起
             const voiceBody = e.target.closest('.voice-message-body');
             if (voiceBody) {
