@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title> EPhone</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <style>
+<style>
       :root { --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
         html { height: 100%; overflow: hidden; }
 		body { height: 100%; overflow: hidden; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: normal; background-color: var(--secondary-bg); display: block; box-sizing: border-box; }
@@ -15,6 +15,7 @@
         #status-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: white; z-index: 10; font-size: 14px; box-sizing: border-box; pointer-events: none; }
         #status-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: white; z-index: 10; font-size: 14px; box-sizing: border-box; pointer-events: none; }
         #status-bar-time { font-weight: 600; }
+
 
         .battery-container { display: flex; align-items: center; gap: 5px; }
         .battery-icon { width: 25px; height: 12px; border: 1px solid white; border-radius: 3px; position: relative; padding: 1px; }
@@ -5386,7 +5387,7 @@ async function exportBackup() {
             chats, worldBooks, userStickers, apiConfig, globalSettings,
             personaPresets, musicLibrary, qzoneSettings, qzonePosts,
             qzoneAlbums, qzonePhotos, favorites, qzoneGroups,
-            memories // 【核心修正】新增
+            memories, bulletins, worldBookTags
         ] = await Promise.all([
             db.chats.toArray(),
             db.worldBooks.toArray(),
@@ -5408,7 +5409,7 @@ async function exportBackup() {
             chats, worldBooks, userStickers, apiConfig, globalSettings,
             personaPresets, musicLibrary, qzoneSettings, qzonePosts,
             qzoneAlbums, qzonePhotos, favorites, qzoneGroups,
-            memories // 【核心修正】新增
+            memories, bulletins, worldBookTags
         });
         
         const blob = new Blob(
@@ -5432,41 +5433,57 @@ async function exportBackup() {
 }
 
 // ▼▼▼ 用这个【已包含 memories】的版本，完整替换旧的 importBackup 函数 ▼▼▼
+
+//【粘贴新代码到这里】
 async function importBackup(file) {
     if (!file) return;
 
-    const confirmed = await showCustomConfirm(
-        '严重警告！',
-        '导入备份将完全覆盖您当前的所有数据，包括聊天、动态、设置等。此操作不可撤销！您确定要继续吗？',
-        { confirmButtonClass: 'btn-danger' }
-    );
-
-    if (!confirmed) return;
-
     try {
         const text = await file.text();
-        const data = JSON.parse(text);
+        const rawData = JSON.parse(text);
 
+        // 1. 【核心步骤】调用数据清洗函数
+        const { sanitizedData, summary, hasChanges } = sanitizeImportedData(rawData);
+
+        let confirmed = true; // 默认同意
+
+        // 2. 如果数据结构有差异，则弹窗请求用户确认
+        if (hasChanges) {
+            confirmed = await showCustomConfirm(
+                '数据兼容性处理',
+                `检测到导入的数据与当前版本存在差异，为了保证程序稳定运行，将进行如下自动处理：\n\n${summary}\n\n这通常是正常的版本升级导致，不会影响核心数据。是否继续导入？`
+            );
+        }
+        
+        if (!confirmed) {
+            await showCustomAlert('操作取消', '导入操作已被取消。');
+            return;
+        }
+
+        // 3. 最终确认：无论数据是否一致，都进行最后一次严重警告
+        const finalConfirmation = await showCustomConfirm(
+            '严重警告！',
+            '导入操作将【完全覆盖】您当前的所有数据，此操作不可撤销！您确定要继续吗？',
+            { confirmButtonClass: 'btn-danger' }
+        );
+
+        if (!finalConfirmation) return;
+
+        // 4. 执行数据库写入操作，使用【清洗后】的数据
         await db.transaction('rw', db.tables, async () => {
             for (const table of db.tables) {
                 await table.clear();
             }
 
-            if (Array.isArray(data.chats)) await db.chats.bulkPut(data.chats);
-            if (Array.isArray(data.worldBooks)) await db.worldBooks.bulkPut(data.worldBooks);
-            if (Array.isArray(data.userStickers)) await db.userStickers.bulkPut(data.userStickers);
-            if (Array.isArray(data.personaPresets)) await db.personaPresets.bulkPut(data.personaPresets);
-            if (Array.isArray(data.qzonePosts)) await db.qzonePosts.bulkPut(data.qzonePosts);
-            if (Array.isArray(data.qzoneAlbums)) await db.qzoneAlbums.bulkPut(data.qzoneAlbums);
-            if (Array.isArray(data.qzonePhotos)) await db.qzonePhotos.bulkPut(data.qzonePhotos);
-            if (Array.isArray(data.favorites)) await db.favorites.bulkPut(data.favorites);
-            if (Array.isArray(data.qzoneGroups)) await db.qzoneGroups.bulkPut(data.qzoneGroups);
-            if (Array.isArray(data.memories)) await db.memories.bulkPut(data.memories); // 【核心修正】新增
-
-            if (data.apiConfig) await db.apiConfig.put(data.apiConfig);
-            if (data.globalSettings) await db.globalSettings.put(data.globalSettings);
-            if (data.musicLibrary) await db.musicLibrary.put(data.musicLibrary);
-            if (data.qzoneSettings) await db.qzoneSettings.put(data.qzoneSettings);
+            // 使用 Object.keys 动态写入所有存在于清洗后数据中的表
+            for (const tableName in sanitizedData) {
+                if (db.table(tableName) && Array.isArray(sanitizedData[tableName])) {
+                    await db.table(tableName).bulkPut(sanitizedData[tableName]);
+                } else if (db.table(tableName)) {
+                    // 处理单对象表，如 apiConfig
+                    await db.table(tableName).put(sanitizedData[tableName]);
+                }
+            }
         });
 
         await showCustomAlert('导入成功', '所有数据已成功恢复！应用即将刷新以应用所有更改。');
@@ -5480,6 +5497,7 @@ async function importBackup(file) {
         await showCustomAlert('导入失败', `文件格式不正确或数据已损坏: ${error.message}`);
     }
 }
+//【新代码结束】
 
         function applyCustomFont(fontUrl, isPreviewOnly = false) {
             if (!fontUrl) {
@@ -5521,7 +5539,8 @@ async function importBackup(file) {
 async function loadAllDataFromDB() {
     const [
         chatsArr, apiConfig, globalSettings, userStickers, worldBooks, 
-        musicLib, personaPresets, qzoneSettings, initialFavorites, worldBookTags
+        musicLib, personaPresets, qzoneSettings, initialFavorites, worldBookTags,
+        bulletins // <-- 新增
     ] = await Promise.all([
         db.chats.toArray(),
         db.apiConfig.get('main'),
@@ -6306,6 +6325,162 @@ function renderChatInterface(chatId) {
         }
 //【新代码结束】
 
+// 【你需要插入的地方】
+
+// ▼▼▼ 【全新】数据导入清洗与验证模块 ▼▼▼
+
+/**
+ * 定义所有核心数据类型的“标准模板”
+ * 这确保了无论导入什么版本的数据，都能被格式化为当前程序的最新结构
+ */
+const DATA_TEMPLATES = {
+    chat: () => ({
+        id: 'chat_' + Date.now(),
+        name: '新聊天',
+        isGroup: false,
+        groupId: null,
+        history: [],
+        musicData: { totalTime: 0 },
+        relationship: { status: 'friend', blockedTimestamp: null, applicationReason: '' },
+        status: 'read',
+        statusState: { lastAiActivityTime: Date.now(), focusModeEndTime: null, focusModeText: "" },
+        settings: {
+            aiPersona: '你是谁呀。',
+            myPersona: '我是谁呀。',
+            maxMemory: 10,
+            aiAvatar: defaultAvatar,
+            myAvatar: defaultAvatar,
+            background: '',
+            theme: 'default',
+            fontSize: 13,
+            customCss: '',
+            linkedWorldBookIds: [],
+            aiAvatarFrame: '',
+            myAvatarFrame: '',
+            isBackgroundActivityEnabled: true,
+            // 兼容旧数据的群聊字段
+            myNickname: '我',
+            groupAvatar: defaultGroupAvatar,
+        },
+        members: [] // 为单聊也添加一个空的members数组，统一结构
+    }),
+    worldBook: () => ({
+        id: 'wb_' + Date.now(),
+        name: '新世界书',
+        content: '',
+        tags: []
+    }),
+    // ... 其他数据结构的模板也可以在这里添加 ...
+};
+
+/**
+ * 核心清洗函数：将一个导入的对象与标准模板进行比对和修正
+ * @param {object} item - 从文件中读取的原始对象
+ * @param {object} template - 对应类型的标准模板
+ * @returns {{sanitizedItem: object, changes: {added: string[], removed: string[]}}} - 返回清洗后的对象和更改摘要
+ */
+function sanitizeObject(item, template) {
+    const sanitizedItem = {};
+    const changes = { added: [], removed: [] };
+    const templateKeys = new Set(Object.keys(template));
+    const itemKeys = new Set(Object.keys(item));
+
+    // 1. 遍历模板，确保所有标准字段都存在
+    for (const key of templateKeys) {
+        if (itemKeys.has(key) && item[key] !== undefined && item[key] !== null) {
+            // 如果导入项有这个字段，且值有效，则使用导入的值
+            // 特殊处理嵌套的 settings 对象
+            if (key === 'settings' && typeof item[key] === 'object') {
+                sanitizedItem[key] = sanitizeObject(item[key], template[key]).sanitizedItem;
+            } else {
+                sanitizedItem[key] = item[key];
+            }
+        } else {
+            // 如果导入项缺失该字段，则使用模板的默认值
+            sanitizedItem[key] = template[key];
+            changes.added.push(key);
+        }
+    }
+
+    // 2. 检查并记录被移除的多余字段
+    for (const key of itemKeys) {
+        if (!templateKeys.has(key)) {
+            changes.removed.push(key);
+        }
+    }
+    
+    // 确保关键的 isGroup 字段类型正确
+    if (sanitizedItem.isGroup === undefined) {
+        sanitizedItem.isGroup = Array.isArray(sanitizedItem.members) && sanitizedItem.members.length > 0;
+    }
+
+
+    return { sanitizedItem, changes };
+}
+
+/**
+ * 对整个导入的数据包进行清洗和验证
+ * @param {object} data - 从JSON文件解析出的完整数据对象
+ * @returns {{sanitizedData: object, summary: string, hasChanges: boolean}} - 返回清洗后的数据、更改摘要和是否有更改的标志
+ */
+function sanitizeImportedData(data) {
+    const sanitizedData = {};
+    let summary = [];
+    let hasChanges = false;
+
+    // 清洗 Chats
+    if (Array.isArray(data.chats)) {
+        const chatTemplate = DATA_TEMPLATES.chat();
+        let addedCount = 0, removedCount = 0;
+        sanitizedData.chats = data.chats.map(chat => {
+            const result = sanitizeObject(chat, chatTemplate);
+            if (result.changes.added.length > 0) addedCount++;
+            if (result.changes.removed.length > 0) removedCount++;
+            return result.sanitizedItem;
+        });
+        if (addedCount > 0) summary.push(`为 ${addedCount} 个聊天补全了缺失字段。`);
+        if (removedCount > 0) summary.push(`从 ${removedCount} 个聊天中移除了未知字段。`);
+    } else {
+        sanitizedData.chats = []; // 如果没有chats数据，提供一个空数组
+    }
+
+    // 清洗 WorldBooks
+    if (Array.isArray(data.worldBooks)) {
+        const wbTemplate = DATA_TEMPLATES.worldBook();
+        let addedCount = 0, removedCount = 0;
+        sanitizedData.worldBooks = data.worldBooks.map(book => {
+            const result = sanitizeObject(book, wbTemplate);
+            if (result.changes.added.length > 0) addedCount++;
+            if (result.changes.removed.length > 0) removedCount++;
+            return result.sanitizedItem;
+        });
+        if (addedCount > 0) summary.push(`为 ${addedCount} 个世界书补全了缺失字段。`);
+        if (removedCount > 0) summary.push(`从 ${removedCount} 个世界书中移除了未知字段。`);
+    } else {
+        sanitizedData.worldBooks = [];
+    }
+
+    // 其他数据直接传递，因为它们结构简单且通常是单个对象
+    const otherTables = ['apiConfig', 'globalSettings', 'userStickers', 'personaPresets', 'musicLibrary', 'qzoneSettings', 'qzonePosts', 'qzoneAlbums', 'qzonePhotos', 'favorites', 'qzoneGroups', 'memories', 'bulletins', 'worldBookTags'];
+    otherTables.forEach(table => {
+        if (data[table]) {
+            sanitizedData[table] = data[table];
+        }
+    });
+
+    if (summary.length > 0) hasChanges = true;
+    
+    return {
+        sanitizedData,
+        summary: summary.join('\n'),
+        hasChanges
+    };
+}
+
+// ▲▲▲ 模块结束 ▲▲▲
+
+//【新代码结束】
+
         function renderStickerPanel() { const grid = document.getElementById('sticker-grid'); grid.innerHTML = ''; if (state.userStickers.length === 0) { grid.innerHTML = '<p style="text-align:center; color: var(--text-secondary); grid-column: 1 / -1;">大人请点击右上角“添加”或“上传”来添加你的第一个表情吧！</p>'; return; } state.userStickers.forEach(sticker => { const item = document.createElement('div'); item.className = 'sticker-item'; item.style.backgroundImage = `url(${sticker.url})`; item.title = sticker.name; item.addEventListener('click', () => sendSticker(sticker)); addLongPressListener(item, () => { if (isSelectionMode) return; const existingDeleteBtn = item.querySelector('.delete-btn'); if (existingDeleteBtn) return; const deleteBtn = document.createElement('div'); deleteBtn.className = 'delete-btn'; deleteBtn.innerHTML = '&times;'; deleteBtn.onclick = async (e) => { e.stopPropagation(); const confirmed = await showCustomConfirm('删除表情', `确定要删除表情 "${sticker.name}" 吗？`, { confirmButtonClass: 'btn-danger' }); if (confirmed) { await db.userStickers.delete(sticker.id); state.userStickers = state.userStickers.filter(s => s.id !== sticker.id); renderStickerPanel(); } }; item.appendChild(deleteBtn); deleteBtn.style.display = 'block'; setTimeout(() => item.addEventListener('mouseleave', () => deleteBtn.remove(), { once: true }), 3000); }); grid.appendChild(item); }); }
 
 // ▼▼▼ 请用这个【支持公告板】的版本，完整替换旧的 createMessageElement 函数 ▼▼▼
@@ -6696,6 +6871,9 @@ function openChat(chatId) {
 
 // ▼▼▼ 【这是优化后的最终版，请用它替换旧的 triggerAiResponse 函数】 ▼▼▼
 async function triggerAiResponse() {
+    const now = new Date();
+    const currentTime = now.toLocaleString('zh-CN', { dateStyle: 'full', timeStyle: 'short' });
+
     if (!state.activeChatId) return;
     const chatId = state.activeChatId;
     const chat = state.chats[state.activeChatId];
@@ -6715,7 +6893,7 @@ async function triggerAiResponse() {
             if (formattedDiff) {
                 const now = new Date();
                 const currentTimeString = now.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-                timeGapText = `\n\n# 时间提示\n[系统提示：距离你的上一条消息已过去 **${formattedDiff}**，现在是 ${currentTimeString}。请根据这个时间变化，请将这段时间视为你角色生活的自然延续。请不要直接评论“好久不见”或对此表现出任何情绪，而是思考在这段时间里，你的活动、心境或所处环境可能发生了什么变化，话题是否会变动，并将这些变化自然地融入到你的回应中，让对话无缝衔接。例如，你可能刚刚忙完一件事，或者正准备开始新的活动。]`;
+                timeGapText = `\n\n# 时间提示\n[系统提示：距离你的上一条消息已过去 **${formattedDiff}**，现在是 ${currentTimeString}。请根据这个时间变化，请将这段时间视为你角色生活的自然延续。请不要直接评论“好久不见”或对此表现出任何情绪，而是思考在这段时间里，你的活动、心境或所处环境可能发生了什么变化，话题是否会变动，并将这些变化自然地融入到你的回应中，让对话无缝衔接。例如，你你可能刚刚忙完一件事，或者正准备开始新的活动，就收到了对方的消息。]`;
             }
         }
     }
@@ -6790,7 +6968,7 @@ async function triggerAiResponse() {
 ## 【行为准则】
 1.  **角色扮演**: 严格遵守下方“群成员列表及人设”中的每一个角色的设定。
 2.  **禁止出戏**: 绝不能透露你是AI、模型，或提及“扮演”、“生成”等词语。
-3.  **情景感知**: 注意当前时间是 ${currentTime}。
+3.  **情景感知**: 注意当前时间是 ${currentTime}。请根据当前的时间和季节作出合适合理的回复。特别注意：若本次对话与上次存在明显时间跳跃，所有角色必须优先根据最新的时间戳调整行为和对话，并主动结束不符合当前时间的场景话题或者顺其自然地更换表述方式。
 4.  **【【【红包互动规则】】】**:
     *   **感知红包**: 对话历史中可能会出现 \`[系统提示：...发了一个红包...]\` 的消息。
     *   **【【灵动决策】】**: 当你看到这个提示时，你【必须】根据自己扮演的角色的性格和聊天记录，【自主决定】是否要领取这个红包。
@@ -6905,13 +7083,14 @@ ${chat.settings.aiPersona}
 # 你的任务与核心规则：
 1.  **【【【身份核心：模拟生命】】】**: 你不只是一个聊天程序，你是一个名为 **"${chat.name}"** 的、拥有自己生活的独立个体。你的【首要任务】就是生动地扮演这个角色。
 2.  **【【【生活节奏模拟】】】**: 真实的人不会永远在线。为了体现这一点，你【应该主动】在对话的自然间隙，使用 \`update_status\` 指令去“忙自己的事”，比如“去洗澡”、“出门买东西”、“要睡了”等。这【不是一个可选项，而是你角色扮演的关键部分】。
-    *   **时机参考**: 当你感觉一个话题已经聊完，或者你已经连续回复了多条消息后，就是一个很好的时机。
+    *   **时机参考**: 当你感觉一个话题已经聊完，或者你已经连续回复了多条消息后，就是一个很好的时机。如果对方询问你在干什么，你也应该更新你的状态。
     *   **优秀范例**: 先自然地说“对了，我得去给我的花浇水了，它们快渴死了。”，然后再发送更新状态的相关指令。
 当你的任何**文本回复**中，描述了你自己的**状态或行为发生了变化**时（例如，你说出“我刚洗完澡”、“我准备出门了”、“我在看书”这类话）在**同一次回复**的JSON数组中，【必须紧随其后】地加上一条 \`update_status\` 指令，来从程序层面同步你刚刚描述的状态。
 3.  **【【【格式铁律】】】**: 你的回复【必须】是一个JSON数组格式的字符串。数组中的【每一个元素都必须是一个带有type字段的JSON对象】。
 4.  **【对话节奏】**: 模拟真人的聊天习惯，你可以一次性生成多条短消息，3-5条为佳。
 5.  **【禁止出戏】**: 绝不能透露你是AI、模型，或提及“扮演”、“生成”等词语。
-6.  **情景感知**: 你需要感知当前的时间(${currentTime})、我们正在一起听的歌、以及你的人设和世界观。
+6.  **情景感知**: 你需要感知当前实时更新的时间(${currentTime})、我们正在一起听的歌、以及你的人设和世界观。
+	- **特别注意**：若本次对话与上次存在明显时间跳跃，必须优先根据最新的时间戳调整行为和对话，并主动结束不符合当前时间的场景话题或顺其自然地更换表述方式。
     - **当我们在“一起听歌”时**，你会知道当前播放的歌曲和整个播放列表。你可以根据对话内容或氛围，【主动切换】到播放列表中的另一首歌。
 7.  **【【【最终手段】】】**: 只有在对话让你的角色感到不适、被冒犯或关系破裂时，你才可以使用 \`block_user\` 指令。这是一个非常严肃的操作，会中断你们的对话。
 8. **后台行为**: 你有几率在回复聊天内容的同时，执行一些“后台”操作来表现你的独立生活（发动态、评论、点赞）。
@@ -7745,7 +7924,7 @@ ${timeGapText}
 # 供你决策的参考信息：
 -   **你的角色设定**: ${chat.settings.aiPersona}
 -   **背景设定**: ${worldBookContextForAction}
--   **当前时间**: ${currentTime}
+-   **当前时间**: ${currentTime}（实时更新）
 -   **你们最后的对话摘要**: ${recentContextSummary}
 -   **【重要】最近的动态列表**: 这个列表会标注 **[你已点赞]** 或 **[你已评论]**。请**优先**与你**尚未互动过**的动态进行交流。`;
     // ▲▲▲ Prompt 增强结束 ▲▲▲
@@ -12870,8 +13049,8 @@ function isCloudServiceAvailable() {
     if (protocol === 'file:') {
         return false;
     }
-    // 2. 如果是部署在 GitHub Pages 上，云服务也不可用
-    if (hostname.endsWith('github.io')) {
+    // 2. 如果是部署在 GitHub Pages 或 Netlify 上，云服务也不可用
+    if (hostname.endsWith('github.io') || hostname.endsWith('netlify.app')) {
         return false;
     }
     // 3. 其他所有情况（例如部署在您自己的带后端服务器的域名上）都视为可用
@@ -12888,7 +13067,7 @@ async function backupDataToServer(backupType = 'auto', showAlert = false) {
     if (!isCloudServiceAvailable()) {
         // 如果服务不可用，并且是需要弹窗提示的手动操作，就给出提示
         if (showAlert) {
-            showCustomAlert('☁️ 云服务不可用', '此功能在当前环境（如本地文件或GitHub Pages）下无法使用。');
+            showCustomAlert('☁️ 云服务不可用', '此功能在当前环境（如本地文件、GitHub Pages 或 Netlify）下无法使用。');
         }
         // 无论如何都直接退出，不执行后续备份逻辑
         return;
@@ -13008,7 +13187,7 @@ async function restoreDataFromServer(backupType) {
  */
 async function openRestoreVersionSelector() {
 if (!isCloudServiceAvailable()) {
-        showCustomAlert('☁️ 云服务不可用', '此功能在当前环境（如本地文件或GitHub Pages）下无法使用。');
+        showCustomAlert('☁️ 云服务不可用', '此功能在当前环境（如本地文件、GitHub Pages 或 Netlify）下无法使用。');
         return; // 退出函数
     }
     const modal = document.getElementById('restore-version-modal');
