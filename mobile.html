@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title> EPhone</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <style>
-        :root { --screen-width: 350px; --screen-height: 650px; --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
+<style>
+      :root { --screen-width: 350px; --screen-height: 650px; --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
         html { height: 100%; overflow: hidden; }
 	body { height: 100%; overflow: hidden; margin: 0; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: normal; background-color: #dcdcdc; display: flex; justify-content: center; align-items: center; box-sizing: border-box; }
         #phone-frame { padding: 12px; background-color: #fff; border-radius: 50px; box-shadow: 0 20px 50px rgba(0,0,0,0.25), inset 0 2px 4px rgba(0,0,0,0.1); position: relative; }       
@@ -14,6 +14,8 @@
         #phone-screen { width: var(--screen-width); height: var(--screen-height); background-color: #000; border-radius: 40px; position: relative; overflow: hidden; display: flex; flex-direction: column; border: 2px solid #333; }
         #status-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: white; z-index: 10; font-size: 14px; box-sizing: border-box; pointer-events: none; }
         #status-bar-time { font-weight: 600; }
+
+
 
         .battery-container { display: flex; align-items: center; gap: 5px; }
         .battery-icon { width: 25px; height: 12px; border: 1px solid white; border-radius: 3px; position: relative; padding: 1px; }
@@ -5400,7 +5402,9 @@ async function exportBackup() {
             db.qzonePhotos.toArray(),
             db.favorites.toArray(),
             db.qzoneGroups.toArray(),
-            db.memories.toArray() // 【核心修正】新增
+            db.memories.toArray(),
+	    db.bulletins.toArray(), // <--- 明确查询了公告表
+            db.worldBookTags.toArray() 
         ]);
 
         Object.assign(backupData, {
@@ -5467,23 +5471,40 @@ async function importBackup(file) {
 
         if (!finalConfirmation) return;
 
-        // 4. 执行数据库写入操作，使用【清洗后】的数据
-        await db.transaction('rw', db.tables, async () => {
-            for (const table of db.tables) {
-                await table.clear();
+        // 4. 【优化版】执行数据库写入操作，只覆盖备份文件中存在的表
+        const tablesToImport = Object.keys(sanitizedData).filter(tableName => db.table(tableName));
+        
+        await db.transaction('rw', tablesToImport, async () => {
+            // 先清空这些即将被写入的表
+            for (const tableName of tablesToImport) {
+                await db.table(tableName).clear();
             }
+            // 再写入新数据
+            for (const tableName of tablesToImport) {
+                const tableData = sanitizedData[tableName];
+                // 检查数据是否为数组，以决定使用 bulkPut 还是 put
+                if (Array.isArray(tableData)) {
+                    // 对于 chats, worldBooks 等多条记录的表
+                    await db.table(tableName).bulkPut(tableData);
+                } else if (tableData && typeof tableData === 'object') {
+                    // 对于 apiConfig, globalSettings 等单条记录的表
+                    await db.table(tableName).put(tableData);
 
-            // 使用 Object.keys 动态写入所有存在于清洗后数据中的表
-            for (const tableName in sanitizedData) {
-                if (db.table(tableName) && Array.isArray(sanitizedData[tableName])) {
-                    await db.table(tableName).bulkPut(sanitizedData[tableName]);
-                } else if (db.table(tableName)) {
-                    // 处理单对象表，如 apiConfig
-                    await db.table(tableName).put(sanitizedData[tableName]);
                 }
             }
         });
 
+// 5. 强制从所有世界书中重建全局标签列表
+        console.log("正在执行导入后标签重建...");
+        const allBooks = await db.worldBooks.toArray();
+        const allTagsFromBooks = new Set(allBooks.flatMap(book => book.tags || []));
+        
+        await db.worldBookTags.clear(); // 清空旧的全局标签表
+        const newTagsForDB = Array.from(allTagsFromBooks).map(name => ({ name }));
+        if (newTagsForDB.length > 0) {
+            await db.worldBookTags.bulkPut(newTagsForDB); // 批量写入重建后的标签列表
+            console.log(`标签重建完成，共找到 ${newTagsForDB.length} 个唯一标签。`);
+        }
         await showCustomAlert('导入成功', '所有数据已成功恢复！应用即将刷新以应用所有更改。');
         
         setTimeout(() => {
@@ -7873,7 +7894,7 @@ async function triggerInactiveAiAction(chatId) {
     const lastMessage = chat.history.slice(-1)[0];
     let timeGapText = '';
     let timeSinceLastMessageMinutes = 0;
-const currentTimeString = now.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const currentTimeString = now.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
 
     if (lastMessage) {
         const timeDiff = Date.now() - lastMessage.timestamp;
@@ -9882,7 +9903,8 @@ if (coreWorldBookForGroup && coreWorldBookForGroup.content) {
 
  let timeGapText = '';
     const visibleHistoryForGroup = historyForContext.filter(m => !m.isHidden);
-const currentTimeString = new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const currentTimeString = new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+
     if (visibleHistoryForGroup.length > 0) {
         const lastMessage = visibleHistoryForGroup[visibleHistoryForGroup.length - 1];
         const timeDiff = Date.now() - lastMessage.timestamp;
