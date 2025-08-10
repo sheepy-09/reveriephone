@@ -7873,6 +7873,8 @@ async function triggerInactiveAiAction(chatId) {
     const lastMessage = chat.history.slice(-1)[0];
     let timeGapText = '';
     let timeSinceLastMessageMinutes = 0;
+const currentTimeString = now.toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+
     if (lastMessage) {
         const timeDiff = Date.now() - lastMessage.timestamp;
         timeSinceLastMessageMinutes = Math.floor(timeDiff / (1000 * 60));
@@ -9880,6 +9882,7 @@ if (coreWorldBookForGroup && coreWorldBookForGroup.content) {
 
  let timeGapText = '';
     const visibleHistoryForGroup = historyForContext.filter(m => !m.isHidden);
+const currentTimeString = new Date().toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
     if (visibleHistoryForGroup.length > 0) {
         const lastMessage = visibleHistoryForGroup[visibleHistoryForGroup.length - 1];
         const timeDiff = Date.now() - lastMessage.timestamp;
