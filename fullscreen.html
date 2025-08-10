@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title> EPhone</title>
     <script src="https://unpkg.com/dexie/dist/dexie.js"></script>
-    <style>
+<style>
       :root { --secondary-bg: #ffffff; --border-color: #e0e0e0; --text-primary: #1f1f1f; --text-secondary: #8a8a8a; --accent-color: #007bff; }
         html { height: 100%; overflow: hidden; }
 		body { height: 100%; overflow: hidden; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-weight: normal; background-color: var(--secondary-bg); display: block; box-sizing: border-box; }
@@ -5474,27 +5474,18 @@ async function importBackup(file) {
             for (const table of db.tables) {
                 await table.clear();
             }
+
+            // 使用 Object.keys 动态写入所有存在于清洗后数据中的表
             for (const tableName in sanitizedData) {
                 if (db.table(tableName) && Array.isArray(sanitizedData[tableName])) {
                     await db.table(tableName).bulkPut(sanitizedData[tableName]);
                 } else if (db.table(tableName)) {
+                    // 处理单对象表，如 apiConfig
                     await db.table(tableName).put(sanitizedData[tableName]);
                 }
             }
         });
-        // ▼▼▼ 【核心新增：“导入后大扫除”逻辑】 ▼▼▼
-        // 5. 强制从所有世界书中重建全局标签列表
-        console.log("正在执行导入后标签重建...");
-        const allBooks = await db.worldBooks.toArray();
-        const allTagsFromBooks = new Set(allBooks.flatMap(book => book.tags || []));
-        
-        await db.worldBookTags.clear(); // 清空旧的全局标签表
-        const newTagsForDB = Array.from(allTagsFromBooks).map(name => ({ name }));
-        if (newTagsForDB.length > 0) {
-            await db.worldBookTags.bulkPut(newTagsForDB); // 批量写入重建后的标签列表
-            console.log(`标签重建完成，共找到 ${newTagsForDB.length} 个唯一标签。`);
-        }
-        // ▲▲▲ 新增逻辑结束 ▲▲▲
+
         await showCustomAlert('导入成功', '所有数据已成功恢复！应用即将刷新以应用所有更改。');
         
         setTimeout(() => {
@@ -10948,13 +10939,41 @@ exitSelectionMode(); state.activeChatId = null; showScreen('chat-list-screen'); 
             document.getElementById('add-chat-btn').addEventListener('click', async () => { 
                 const name = await showCustomPrompt('创建新聊天', '请输入Ta的名字'); 
                 if (name && name.trim()) { 
-                    // 【核心修改】直接从模板创建标准对象
-                    const newChat = DATA_TEMPLATES.chat();
-                    // 填充用户输入的数据
-                    newChat.id = 'chat_' + Date.now();
-                    newChat.name = name.trim();
-                    
-                    state.chats[newChat.id] = newChat; 
+                    const newChatId = 'chat_' + Date.now(); 
+                    const newChat = { 
+                        id: newChatId, 
+                        name: name.trim(), 
+                        isGroup: false,
+                        relationship: {
+                            status: 'friend',
+                            blockedTimestamp: null,
+                            applicationReason: ''
+                        },
+                        //【核心新增】为新角色添加状态对象
+                        statusState: {
+                            lastAiActivityTime: Date.now(),
+                            focusModeEndTime: null,
+                            focusModeText: ""
+                        },
+                        settings: { 
+                            aiPersona: '你是谁呀。', 
+                            myPersona: '我是谁呀。', 
+                            maxMemory: 10, 
+                            aiAvatar: defaultAvatar, 
+                            myAvatar: defaultAvatar, 
+                            background: '', 
+                            theme: 'default', 
+                            fontSize: 13, 
+                            customCss: '',
+                            linkedWorldBookIds: [], 
+                            aiAvatarFrame: '', 
+                            myAvatarFrame: '',
+                            isBackgroundActivityEnabled: true // <--【核心新增】默认开启
+                        }, 
+                        history: [], 
+                        musicData: { totalTime: 0 } 
+                    };
+                    state.chats[newChatId] = newChat; 
                     await db.chats.put(newChat); 
                     renderChatList(); 
                 } 
@@ -11113,43 +11132,31 @@ alert('API设置已保存!'); });
                 } 
             });
 
+            document.getElementById('add-world-book-btn').addEventListener('click', async () => { const name = await showCustomPrompt('创建世界书', '请输入书名'); if (name && name.trim()) { const newBook = { id: 'wb_' + Date.now(), name: name.trim(), content: '' }; await db.worldBooks.add(newBook); state.worldBooks.push(newBook); renderWorldBookScreen(); openWorldBookEditor(newBook.id); } });
 document.getElementById('save-world-book-btn').addEventListener('click', async () => {
                 if (!editingWorldBookId) return;
-                
-                const originalBookIndex = state.worldBooks.findIndex(wb => wb.id === editingWorldBookId);
-                if (originalBookIndex === -1) return;
-                const originalBook = state.worldBooks[originalBookIndex];
-                const newName = document.getElementById('world-book-name-input').value.trim();
-                if (!newName) {
-                    alert('书名不能为空！');
-                    return;
-                }
-                const newContent = document.getElementById('world-book-content-input').value;
-                const checkedBoxes = document.querySelectorAll('#world-book-tags-checkboxes input:checked');
-                const newTags = Array.from(checkedBoxes).map(cb => cb.value);
-                const updatedBookData = { ...originalBook, name: newName, content: newContent, tags: newTags };
-                const { sanitizedItem } = sanitizeObject(updatedBookData, DATA_TEMPLATES.worldBook());
-            
-                await db.worldBooks.put(sanitizedItem);
-                state.worldBooks[originalBookIndex] = sanitizedItem;
-                
-                // ▼▼▼ 【核心新增：“保存时守规矩”逻辑】 ▼▼▼
-                let tagsUpdated = false;
-                for (const tag of newTags) {
-                    // 检查这个新标签是否已存在于全局标签列表中
-                    if (!state.worldBookTags.includes(tag)) {
-                        // 如果不存在，则添加到数据库和 state 中
-                        await db.worldBookTags.add({ name: tag });
-                        state.worldBookTags.push(tag);
-                        tagsUpdated = true;
+                const book = state.worldBooks.find(wb => wb.id === editingWorldBookId);
+                if (book) {
+                    const newName = document.getElementById('world-book-name-input').value.trim();
+                    if (!newName) {
+                        alert('书名不能为空！');
+                        return;
                     }
+                    book.name = newName;
+                    book.content = document.getElementById('world-book-content-input').value;
+                    
+                    // 【核心新增】收集并保存选中的标签
+                    const checkedBoxes = document.querySelectorAll('#world-book-tags-checkboxes input:checked');
+                    book.tags = Array.from(checkedBoxes).map(cb => cb.value);
+            
+                    await db.worldBooks.put(book);
+                    document.getElementById('world-book-editor-title').textContent = newName;
+                    editingWorldBookId = null;
+                    renderWorldBookScreen(); // 刷新列表
+                    showScreen('world-book-screen');
                 }
-                // ▲▲▲ 新增逻辑结束 ▲▲▲
-                
-                editingWorldBookId = null;
-                renderWorldBookScreen();
-                showScreen('world-book-screen');
             });
+//【新代码结束】
 
              document.getElementById('chat-messages').addEventListener('click', (e) => {
             // 处理图片弹窗（逻辑保留）
