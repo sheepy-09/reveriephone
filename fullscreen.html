@@ -5402,7 +5402,9 @@ async function exportBackup() {
             db.qzonePhotos.toArray(),
             db.favorites.toArray(),
             db.qzoneGroups.toArray(),
-            db.memories.toArray() // 【核心修正】新增
+            db.memories.toArray(),
+	    db.bulletins.toArray(), // <--- 明确查询了公告表
+            db.worldBookTags.toArray() 
         ]);
 
         Object.assign(backupData, {
@@ -5469,23 +5471,40 @@ async function importBackup(file) {
 
         if (!finalConfirmation) return;
 
-        // 4. 执行数据库写入操作，使用【清洗后】的数据
-        await db.transaction('rw', db.tables, async () => {
-            for (const table of db.tables) {
-                await table.clear();
+        // 4. 【优化版】执行数据库写入操作，只覆盖备份文件中存在的表
+        const tablesToImport = Object.keys(sanitizedData).filter(tableName => db.table(tableName));
+        
+        await db.transaction('rw', tablesToImport, async () => {
+            // 先清空这些即将被写入的表
+            for (const tableName of tablesToImport) {
+                await db.table(tableName).clear();
             }
+            // 再写入新数据
+            for (const tableName of tablesToImport) {
+                const tableData = sanitizedData[tableName];
+                // 检查数据是否为数组，以决定使用 bulkPut 还是 put
+                if (Array.isArray(tableData)) {
+                    // 对于 chats, worldBooks 等多条记录的表
+                    await db.table(tableName).bulkPut(tableData);
+                } else if (tableData && typeof tableData === 'object') {
+                    // 对于 apiConfig, globalSettings 等单条记录的表
+                    await db.table(tableName).put(tableData);
 
-            // 使用 Object.keys 动态写入所有存在于清洗后数据中的表
-            for (const tableName in sanitizedData) {
-                if (db.table(tableName) && Array.isArray(sanitizedData[tableName])) {
-                    await db.table(tableName).bulkPut(sanitizedData[tableName]);
-                } else if (db.table(tableName)) {
-                    // 处理单对象表，如 apiConfig
-                    await db.table(tableName).put(sanitizedData[tableName]);
                 }
             }
         });
 
+// 5. 强制从所有世界书中重建全局标签列表
+        console.log("正在执行导入后标签重建...");
+        const allBooks = await db.worldBooks.toArray();
+        const allTagsFromBooks = new Set(allBooks.flatMap(book => book.tags || []));
+        
+        await db.worldBookTags.clear(); // 清空旧的全局标签表
+        const newTagsForDB = Array.from(allTagsFromBooks).map(name => ({ name }));
+        if (newTagsForDB.length > 0) {
+            await db.worldBookTags.bulkPut(newTagsForDB); // 批量写入重建后的标签列表
+            console.log(`标签重建完成，共找到 ${newTagsForDB.length} 个唯一标签。`);
+        }
         await showCustomAlert('导入成功', '所有数据已成功恢复！应用即将刷新以应用所有更改。');
         
         setTimeout(() => {
