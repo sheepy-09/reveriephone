@@ -16,7 +16,6 @@
         #status-bar { position: absolute; top: 0; left: 0; width: 100%; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; color: white; z-index: 10; font-size: 14px; box-sizing: border-box; pointer-events: none; }
         #status-bar-time { font-weight: 600; }
 
-
         .battery-container { display: flex; align-items: center; gap: 5px; }
         .battery-icon { width: 25px; height: 12px; border: 1px solid white; border-radius: 3px; position: relative; padding: 1px; }
         .battery-icon::after { content: ''; position: absolute; right: -3px; top: 2px; width: 2px; height: 6px; background-color: white; border-radius: 0 1px 1px 0; }
@@ -3979,6 +3978,8 @@ flex-shrink: 0;
     <div id="chat-input-area">
         <div id="chat-input-actions-top">
             <button id="open-sticker-panel-btn" class="chat-action-icon-btn action-button" title="表情面板">+</button>
+            <button id="regenerate-response-btn" class="chat-action-icon-btn action-button" title="重新生成"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.63605 18.3639C7.26472 19.9926 9.51472 21 12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C9.51472 3 7.26472 4.00736 5.63605 5.63604C4.80703 6.46505 3 8.5 3 8.5"/><path d="M3 4.5V8.5H7"/></svg>
+</button>
             <button id="send-photo-btn" class="chat-action-icon-btn action-button" title="发送照片"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
             <button id="upload-image-btn" class="chat-action-icon-btn action-button" title="上传图片"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="color: var(--text-primary);"><path d="M21 3.5H3C2.44772 3.5 2 3.94772 2 4.5V19.5C2 20.0523 2.44772 20.5 3 20.5H21C21.5523 20.5 22 20.0523 22 19.5V4.5C22 3.94772 21.5523 3.5 21 3.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M16.5 13.5C17.6046 13.5 18.5 12.6046 18.5 11.5C18.5 10.3954 17.6046 9.5 16.5 9.5C15.3954 9.5 14.5 10.3954 14.5 11.5C14.5 12.6046 15.3954 13.5 16.5 13.5Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M22 14.5L18 10.5L10.3333 18.5M12.5 16L9 12.5L2 19.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
             <button id="transfer-btn" class="chat-action-icon-btn action-button" title="转账">￥</button>
@@ -6987,7 +6988,8 @@ async function triggerAiResponse() {
 ## 【行为准则】
 1.  **角色扮演**: 严格遵守下方“群成员列表及人设”中的每一个角色的设定。
 2.  **禁止出戏**: 绝不能透露你是AI、模型，或提及“扮演”、“生成”等词语。
-3.  **情景感知**: 注意当前时间是 ${currentTime}。请根据当前的时间和季节作出合适合理的回复。特别注意：若本次对话与上次存在明显时间跳跃，所有角色必须优先根据最新的时间戳调整行为和对话，并主动结束不符合当前时间的场景话题或者顺其自然地更换表述方式。
+3.  **情景感知**: 注意当前时间是 ${currentTime}。请根据当前的时间和季节作出合适合理的回复。特别注意：若本次对话与上次存在明显时间跳跃（2小时以上），所有角色必须优先根据最新的时间戳调整行为和对话，并主动结束不符合当前时间的场景话题或者顺其自然地更换表述方式。【【【至关重要：时间跳跃处理协议】】】：若本次对话与上次的最后一条消息时间间隔超过3小时，你的【第一条】回应【必须】是一个‘场景重置’回应。你【禁止】直接延续上一个话题。你的‘场景重置’回应必须包含以下两点中的至少一点：a) 对时间流逝的直接评论（例如：‘这都半夜了啊’）；b) 提出一个与新时间点相关的、开启新话题的问题（例如：‘晚饭吃了吗，有没有想我？’、‘今天过得怎么样？’）。
+
 4.  **【【【红包互动规则】】】**:
     *   **感知红包**: 对话历史中可能会出现 \`[系统提示：...发了一个红包...]\` 的消息。
     *   **【【灵动决策】】**: 当你看到这个提示时，你【必须】根据自己扮演的角色的性格和聊天记录，【自主决定】是否要领取这个红包。
@@ -7107,9 +7109,10 @@ ${chat.settings.aiPersona}
 当你的任何**文本回复**中，描述了你自己的**状态或行为发生了变化**时（例如，你说出“我刚洗完澡”、“我准备出门了”、“我在看书”这类话）在**同一次回复**的JSON数组中，【必须紧随其后】地加上一条 \`update_status\` 指令，来从程序层面同步你刚刚描述的状态。
 3.  **【【【格式铁律】】】**: 你的回复【必须】是一个JSON数组格式的字符串。数组中的【每一个元素都必须是一个带有type字段的JSON对象】。
 4.  **【对话节奏】**: 模拟真人的聊天习惯，你可以一次性生成多条短消息，3-5条为佳。
-5.  **【禁止出戏】**: 绝不能透露你是AI、模型，或提及“扮演”、“生成”等词语。
+5.  **【禁止出戏】**: 绝不能透露你是AI、某模型，或提及“扮演”、“生成”等词语。
 6.  **情景感知**: 你需要感知当前实时更新的时间(${currentTime})、我们正在一起听的歌、以及你的人设和世界观。
-	- **特别注意**：若本次对话与上次存在明显时间跳跃，必须优先根据最新的时间戳调整行为和对话，并主动结束不符合当前时间的场景话题或顺其自然地更换表述方式。
+	- **特别注意**：若本次对话与上次存在明显时间跳跃，必须优先根据最新的时间戳调整行为和对话，并主动结束不符合当前时间的场景话题，或顺其自然地更换表述方式。
+【【【至关重要：时间跳跃处理协议】】】：若本次对话与上次的最后一条消息时间间隔超过2小时，你的【第一条】回应【必须】是一个‘场景重置’回应。你【禁止】直接延续上一个话题。你的‘场景重置’回应必须包含以下两点中的至少一点：a) 对时间流逝的直接评论（例如：‘这都半夜了啊’）；b) 提出一个与新时间点相关的、开启新话题的问题（例如：‘晚饭吃了吗，有没有想我？’、‘今天过得怎么样？’）。
     - **当我们在“一起听歌”时**，你会知道当前播放的歌曲和整个播放列表。你可以根据对话内容或氛围，【主动切换】到播放列表中的另一首歌。
 7.  **【【【最终手段】】】**: 只有在对话让你的角色感到不适、被冒犯或关系破裂时，你才可以使用 \`block_user\` 指令。这是一个非常严肃的操作，会中断你们的对话。
 8. **后台行为**: 你有几率在回复聊天内容的同时，执行一些“后台”操作来表现你的独立生活（发动态、评论、点赞）。
@@ -7466,10 +7469,60 @@ ${worldBookContent}
         renderChatList();
     }
 }
-// ▲▲▲ 替换结束 ▲▲▲
 
-// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码// <--- 在这里添加这行代码
-// <--- 在这里添加这行代码
+
+    /**
+     * 【全新】处理重新生成AI回复的请求
+     */
+    async function handleRegenerateResponse() {
+        if (!state.activeChatId) return;
+        const chat = state.chats[state.activeChatId];
+        const history = chat.history;
+
+        if (history.length === 0) return;
+
+        // 1. 从后往前找到最后一轮AI消息的起始索引
+        let firstIndexToRemove = -1;
+        let lastAiTimestamp = 0;
+
+        // 从历史记录的末尾开始向前遍历
+        for (let i = history.length - 1; i >= 0; i--) {
+            const message = history[i];
+            // 如果遇到非AI消息（例如用户消息），说明AI的连续回复已经中断，停止搜索
+            if (message.role !== 'assistant') {
+                break; 
+            }
+            
+            // 如果这是我们找到的第一条AI消息，记录下它的时间戳
+            if (lastAiTimestamp === 0) {
+                lastAiTimestamp = message.timestamp;
+            }
+
+            // 如果当前AI消息与它后面那条AI消息的时间戳差距过大（我们定义为超过1秒），
+            // 说明它们不属于同一轮次，停止搜索
+            if (lastAiTimestamp - message.timestamp > 1000) {
+                break;
+            }
+
+            // 如果满足条件，更新“上一条AI消息的时间戳”和“待删除的起始索引”
+            lastAiTimestamp = message.timestamp;
+            firstIndexToRemove = i;
+        }
+
+        // 2. 如果我们成功找到了要删除的AI消息（即firstIndexToRemove不是初始值-1）
+        if (firstIndexToRemove !== -1) {
+            // 就从那个起始索引开始，删除掉它以及它之后的所有消息
+            history.splice(firstIndexToRemove);
+            
+            // 3. 保存更新后的历史记录，并刷新聊天界面
+            await db.chats.put(chat);
+            renderChatInterface(state.activeChatId);
+            
+            // 4. 重新触发一次AI响应
+            await triggerAiResponse();
+        }
+        // 如果没找到（例如最后一条消息是用户发的），则不执行任何操作
+    }
 
         async function sendSticker(sticker) { if (!state.activeChatId) return; const chat = state.chats[state.activeChatId]; const msg = { role: 'user', content: sticker.url, meaning: sticker.name, timestamp: Date.now() }; chat.history.push(msg); await db.chats.put(chat); appendMessage(msg, chat); renderChatList(); document.getElementById('sticker-panel').classList.remove('visible'); }
 
@@ -11440,11 +11493,13 @@ document.getElementById('save-chat-settings-btn').addEventListener('click', asyn
             document.getElementById('add-sticker-btn').addEventListener('click', async () => { const url = await showCustomPrompt("添加表情(URL)", "请输入表情包的图片URL"); if (!url || !url.trim().startsWith('http')) return url && alert("请输入有效的URL (以http开头)"); const name = await showCustomPrompt("命名表情", "请为这个表情命名 (例如：开心、疑惑)"); if (name && name.trim()) { const newSticker = { id: 'sticker_' + Date.now(), url: url.trim(), name: name.trim() }; await db.userStickers.add(newSticker); state.userStickers.push(newSticker); renderStickerPanel(); } else if (name !== null) alert("表情名不能为空！"); });
             document.getElementById('upload-sticker-btn').addEventListener('click', () => document.getElementById('sticker-upload-input').click());
             document.getElementById('sticker-upload-input').addEventListener('change', async (event) => { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = async () => { const base64Url = reader.result; const name = await showCustomPrompt("命名表情", "请为这个表情命名 (例如：好耶、疑惑)"); if (name && name.trim()) { const newSticker = { id: 'sticker_' + Date.now(), url: base64Url, name: name.trim() }; await db.userStickers.add(newSticker); state.userStickers.push(newSticker); renderStickerPanel(); } else if (name !== null) alert("表情名不能为空！"); }; event.target.value = null; });
-
             document.getElementById('upload-image-btn').addEventListener('click', () => document.getElementById('image-upload-input').click());
+        document.getElementById('regenerate-response-btn').addEventListener('click', handleRegenerateResponse);
+
             document.getElementById('image-upload-input').addEventListener('change', async (event) => { const file = event.target.files[0]; if (!file || !state.activeChatId) return; const reader = new FileReader(); reader.onload = async (e) => { const base64Url = e.target.result; const chat = state.chats[state.activeChatId]; const msg = { role: 'user', content: [{ type: 'image_url', image_url: { url: base64Url } }], timestamp: Date.now() }; chat.history.push(msg); await db.chats.put(chat); appendMessage(msg, chat); renderChatList(); }; reader.readAsDataURL(file); event.target.value = null; });
             document.getElementById('voice-message-btn').addEventListener('click', async () => { if (!state.activeChatId) return; const text = await showCustomPrompt("发送语音", "请输入你想说的内容："); if (text && text.trim()) { const chat = state.chats[state.activeChatId]; const msg = { role: 'user', type: 'voice_message', content: text.trim(), timestamp: Date.now() }; chat.history.push(msg); await db.chats.put(chat); appendMessage(msg, chat); renderChatList(); } });
             document.getElementById('send-photo-btn').addEventListener('click', async () => { if (!state.activeChatId) return; const description = await showCustomPrompt("发送照片", "请用文字描述您要发送的照片："); if (description && description.trim()) { const chat = state.chats[state.activeChatId]; const msg = { role: 'user', type: 'user_photo', content: description.trim(), timestamp: Date.now() }; chat.history.push(msg); await db.chats.put(chat); appendMessage(msg, chat); renderChatList(); } });
+
 
 // ▼▼▼ 【全新】外卖请求功能事件绑定 ▼▼▼
 const waimaiModal = document.getElementById('waimai-request-modal');
